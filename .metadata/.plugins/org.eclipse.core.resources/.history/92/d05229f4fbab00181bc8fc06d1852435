@@ -1,9 +1,0 @@
-package com.liuwei.demo;
-
-public class Fu {
-	
-	private String pri;
-	protected String pro;
-	String defalu;
-	
-}
