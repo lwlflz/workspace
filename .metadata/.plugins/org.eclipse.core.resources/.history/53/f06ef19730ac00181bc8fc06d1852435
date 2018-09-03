@@ -1,0 +1,23 @@
+package com.build.cloud.modules.sys.service;
+import java.util.List;
+import java.util.Map;
+
+import com.baomidou.mybatisplus.service.IService;
+import com.build.cloud.common.utils.PageUtils;
+import com.build.cloud.modules.sys.dao.SysCompanyDao;
+import com.build.cloud.modules.sys.entity.SysCompanyEntity;
+/**
+ * @ClassName: ICompanyService
+ * @Description: 公司表
+ * @author: liutao
+ * @date: 2018年3月30日 下午3:27:04
+ */
+public interface ISysCompanyService extends IService<SysCompanyEntity> {
+	PageUtils queryPage(Map<String, Object> params);
+	
+	public List<Map<String, Object>> selectByUserId(String userId);
+	
+	public List<SysCompanyEntity> getCompanyChild(Map<String, Object> params);
+
+	List<SysCompanyEntity> getCompanyByName(String companyName);
+}

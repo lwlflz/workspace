@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.build.cloud.modules.mat.dao.MatPurchasePlanSumDao">
+
+	<select id="getPurchasePlanSumPage" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT  
+		  	pps.id as id ,
+			pps.project_id as projectId,
+		  	pps.project_name as projectName,
+		  	pps.plan_month as planMonth,
+		  	pps.bill_code as billCode,
+		  	pps.partya_id as partyaId,
+		  	b.company_name as partyaName,
+		  	pps.activityins_id as activityinsId,
+		  	pps.return_status as returnStatus,
+		  	pps.check_fin_time as checkFinTime,
+		  	pps.check_status as checkStatus,
+		  	pps.create_by as createBy,
+		  	pps.create_time as createTime,
+		  	pps.update_by as updateBy,
+		  	pps.update_time as updateTime,
+		  	pps.valid as valid,
+		  	pps.source as source
+		FROM 
+			mat_purchase_plan_sum pps
+		LEFT JOIN
+			sys_company b
+		on 
+			b.id = pps.partya_id
+		LEFT JOIN
+			bs_project p 
+		on 
+			p.id = pps.project_id
+		where 
+			pps.valid = '0' 
+		and 
+			pps.project_id in (select id from bs_project where company_id=#{companyId})
+		<if test="planMonth != null and planMonth != ''">
+			and pps.plan_month = #{planMonth}
+		</if>
+		<if test="projectId != null and projectId !=''">
+			and pps.project_id = #{projectId}
+		</if>
+		<if test="checkStatus != null and checkStatus !=''">
+			and pps.check_status = '2' and pps.return_status = '0'
+		</if>	
+	</select>
+	
+	<select id="getPurchasePlanSumById" parameterType="string"
+		resultType="com.build.cloud.modules.mat.entity.MatPurchasePlanSumEntity">
+		SELECT  
+		  	pps.id as id ,
+			pps.project_id as projectId,
+		  	pps.project_name as projectName,
+		  	pps.plan_month as planMonth,
+		  	pps.bill_code as billCode,
+		  	pps.partya_id as partyaId,
+		  	b.company_name as partyaName,
+		  	pps.activityins_id as activityinsId,
+		  	pps.return_status as returnStatus,
+		  	pps.check_fin_time as checkFinTime,
+		  	pps.check_status as checkStatus,
+		  	pps.create_by as createBy,
+		  	pps.create_time as createTime,
+		  	pps.update_by as updateBy,
+		  	pps.update_time as updateTime,
+		  	pps.valid as valid,
+		  	pps.source as source
+		FROM 
+			mat_purchase_plan_sum pps
+		LEFT JOIN
+			sys_company b
+		on 
+			b.id = pps.partya_id 
+		where 
+			pps.id = #{id}
+	</select>
+	
+	<!-- 用于采购订单参照 -->
+	<select id="getPlanSumList" parameterType="java.util.Map" resultType="java.util.Map">
+		<!-- 总包\劳务\建设方自购计划 -->
+		select * from 
+		(<if test='companyRoleType == "2" or companyRoleType == "3" or companyRoleType == "1"'>
+			SELECT  
+			  	pps.id as id ,
+				pps.project_id as projectId,
+			  	pps.project_name as projectName,
+			  	pps.plan_month as planMonth,
+			  	pps.bill_code as billCode,
+			  	pps.main_con_id as mainConId,
+			  	b.company_name as mainConName,
+			  	pps.work_con_name as workConName,
+			  	'' as partyaId,
+				'' as partyaName,
+				'2' as orderType,
+				pps.create_time as createTime
+			FROM 
+				mat_purchase_plan pps
+			LEFT JOIN
+				sys_company b
+			on 
+				b.id = pps.main_con_id
+			where 
+				pps.valid = '0'
+				and pps.purchase_type = '2'
+				<if test="planMonth != null and planMonth != ''">
+					and pps.plan_month = #{planMonth}
+				</if>
+				<if test="projectId != null and projectId !=''">
+					and pps.project_id = #{projectId}
+				</if>
+				and pps.check_status = '2' 
+				and pps.return_status = '0'
+				and pps.id in (select plan_id from mat_purchase_planlist mpp
+				where
+					mpp.used_state = '0'
+				or
+					mpp.used_number <![CDATA[ < ]]> mpp.plan_number
+				)
+		</if>
+		<!-- 建设方 -->
+		<if test='companyRoleType == "1"'>
+			<if test="proId != null and proId != ''">
+				union all
+				SELECT 
+					pps.id as id,
+					pps.project_id as projectId,
+					pps.project_name as projectName,
+					pps.plan_month as planMonth,
+					pps.bill_code as billCode,
+					pps.partya_id as partyaId,
+					b.company_name as partyaName,
+				    '' as mainConId,
+				  	'' as mainConName,
+				  	'' as workConName,
+				  	'1' as orderType,
+				  	pps.create_time as createTime
+				FROM 
+					mat_purchase_plan_sum pps
+				left join 
+					sys_company b
+				on 
+					pps.partya_id=b.id		
+				WHERE 
+					pps.partya_id = #{constructionId} 
+					AND pps.project_id IN (SELECT id FROM bs_project WHERE company_id IN (SELECT
+					      b.generalcontractor_id
+					    FROM
+					      op_public_project a
+					        LEFT JOIN bs_project b ON a.id = b.pro_id
+					    WHERE
+					      a.id = #{proId}
+					 ) 
+					 AND pro_id = #{proId})
+					 and pps.valid='0'
+					 and pps.check_status = '2' 
+					 and pps.return_status = '0'
+					 <if test="planMonth != null and planMonth != ''">
+						and pps.plan_month = #{planMonth}
+					 </if>
+					 and pps.id in (select plan_id from mat_purchase_plan_sumlist mpp
+					 where
+						mpp.used_state = '0'
+					 or 
+						mpp.used_number <![CDATA[ < ]]> mpp.plan_number
+					 )
+			</if>
+			
+		</if>) f where orderType = #{purchaseType}
+	
+	</select>
+</mapper>

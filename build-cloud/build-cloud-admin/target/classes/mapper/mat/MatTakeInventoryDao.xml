@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.build.cloud.modules.mat.dao.MatTakeInventoryDao">
+	
+	<select id="pageList" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT
+		  mti.id as id,
+		  mti.project_name as projectName,
+		  mti.project_id as projectId,
+		  mti.con_name as conName,
+		  mti.con_id as conId,
+		  mti.take_by as takeBy,
+		  mti.take_date as takeDate,
+		  mti.take_month as takeMonth,
+		  mti.budget_amount as budgetAmount,
+		  (
+		  	select 
+		  		sum(take_number)
+		  	from 
+		  		mat_take_inventorylist
+		  	where 
+		  		take_id=mti.id	
+		  ) AS 'totalTakeNumber',
+		  (
+			select 
+		  		sum(out_number)
+		  	from 
+		  		mat_take_inventorylist
+		  	where 
+		  		take_id=mti.id	
+		  ) AS 'totalOutNumber'
+		FROM
+		  mat_take_inventory mti
+		WHERE
+		  	mti.valid = '0'
+		  	<if test="projectId != null and projectId != ''">
+		  		AND mti.project_id = #{projectId}
+		  	</if>
+		  	<if test="conId != null and conId != ''">
+		  		AND mti.con_id = #{conId}
+		  	</if>
+		  	<if test="takeMonth != null and takeMonth != ''">
+		  		and take_month=#{takeMonth}
+		  	</if>
+		  	<if test="projectId == null or projectId ==''">
+				and mti.project_id in (select id from bs_project where company_id=#{companyId})
+			</if>
+	</select>
+	
+	<select id="outNumberList" parameterType="java.util.Map" resultType="java.util.Map">
+      SELECT
+	    b.mtr_kind_code as mtrKindCode,
+	    b.mtr_kind_name as mtrKindName,
+	    b.mtr_code as mtrCode,
+	    b.mtr_name as mtrName,
+	    b.measure_code as measureCode,
+	    b.measure_name as measureName,
+	    b.specs,
+	    b.out_number as outNumber,
+	    b.out_time as outTime,
+	    b.position
+	  FROM
+	    mat_purchase_stock_out a
+	    LEFT JOIN mat_purchase_stock_outlist b ON b.stock_id = a.id
+	  WHERE
+	    a.valid = '0' and a.return_status='0' and a.check_status='2'
+	    <if test="projectId != null and projectId != ''">
+	  		AND a.project_id = #{projectId}
+	  	</if>
+	  	<if test="conId != null and conId != ''">
+	  		AND a.team_con_id = #{conId}
+	  	</if>
+	  	<if test="takeDate != null">
+	  		AND DATE_FORMAT(a.out_time, '%Y%m%d') <![CDATA[ <= ]]> DATE_FORMAT(#{takeDate}, '%Y%m%d')
+	  	</if>
+	</select>
+	
+	<select id="takeNumberList" parameterType="java.util.Map" resultType="java.util.Map">
+	  SELECT
+	    b.wbs_name as wbsName,
+	    b.name_property as nameProperty,
+	    b.plan_begin_date as planBeginDate,
+	    b.plan_end_date as planEndDate,
+	    b.act_begin_date as actBeginDate,
+	    b.act_end_date as actEndDate,
+	    b.unique_id as uniqueId,
+	    b.parent_id as parentId,
+	    b.parent_ids as parentIds,
+	    c.gross
+	  FROM
+	  	pro_work_order a
+	    LEFT JOIN pro_plan_detail b ON a.proplan_unique = b.unique_id
+	    LEFT JOIN pro_contract_plandetail c ON c.proplan_unique = b.unique_id
+	    left join pro_plan_info d on b.pro_id=d.id 
+	  WHERE
+	  	a.valid = '0'
+	  	and d.valid='0' 
+	  	and d.eff_status='1'
+	  	<if test="conId != null and conId != ''">
+	  		AND a.project_id = (SELECT project_id FROM ls_contract_labor WHERE id =#{conId})
+	  		AND a.consplit_id = #{conId}
+	  	</if>
+	  	<if test="takeDate != null">
+	  		AND DATE_FORMAT(a.act_end_date, '%Y%m%d') <![CDATA[ <= ]]> DATE_FORMAT(#{takeDate}, '%Y%m%d')
+	  	</if>
+	    AND a.work_status = '5'
+	</select>
+	
+	<select id="takeNumberParent" parameterType="java.util.Map" resultType="java.util.Map">
+      SELECT
+	    a.wbs_name as wbsName,
+	    a.name_property as nameProperty,
+	    a.plan_begin_date as planBeginDate,
+	    a.plan_end_date as planEndDate,
+	    a.act_begin_date as actBeginDate,
+	    a.act_end_date as actEndDate,
+	    a.unique_id as uniqueId,
+	    a.parent_id as parentId,
+	    a.parent_ids as parentIds,
+	    '' as gross
+	  FROM  pro_plan_detail a
+	    left join pro_plan_info b on a.pro_id=b.id
+	  WHERE
+	  	a.valid = '0'
+	  	and b.valid='0' 
+	  	and b.eff_status='1'
+	  	<if test="list !=null and list.size > 0">
+	  		and a.unique_id in 
+	  		<foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+            	#{item}
+       		</foreach>
+	  	</if>
+	  	
+        <if test="projectId != null and projectId != ''">
+        	and b.project_id=#{projectId}
+        </if>
+	</select>
+	
+	<select id="takeNumber" parameterType="java.util.Map" resultType="java.math.BigDecimal">
+	  SELECT
+	    SUM(c.gross) as takeNumber
+	  FROM
+	  	pro_work_order a
+	    LEFT JOIN pro_plan_detail b ON a.proplan_unique = b.unique_id
+	    LEFT JOIN pro_contract_plandetail c ON c.proplan_unique = b.unique_id
+	    left join pro_plan_info d on b.pro_id=d.id
+	  WHERE
+	  	a.valid = '0'
+	  	and d.valid='0' 
+	  	and d.eff_status='1'
+	    <if test="projectId != null and projectId != ''">
+	  		AND a.project_id = #{projectId}
+	  	</if>
+	  	<if test="conId != null and conId != ''">
+	  		AND a.consplit_id = #{conId}
+	  	</if>
+	  	<if test="takeDate != null">
+	  		AND DATE_FORMAT(a.act_end_date, '%Y%m%d') <![CDATA[ <= ]]> DATE_FORMAT(#{takeDate}, '%Y%m%d')
+	  	</if>
+	    AND a.work_status = '5'
+	</select>
+	
+	<select id="outNumberListAdd" parameterType="java.util.Map" resultType="java.util.Map">
+      SELECT
+	    b.mtr_kind_code as mtrKindCode,
+	    b.mtr_kind_name as mtrKindName,
+	    b.mtr_code as mtrCode,
+	    b.mtr_name as mtrName,
+	    b.measure_code as measureCode,
+	    b.measure_name as measureName,
+	    b.specs,
+	    sum(out_number) as outNumber
+	  FROM
+	    mat_purchase_stock_out a
+	    LEFT JOIN mat_purchase_stock_outlist b ON b.stock_id = a.id
+	  WHERE
+	    a.valid = '0' and a.return_status='0' and a.check_status='2'
+	    <if test="projectId != null and projectId != ''">
+	  		AND a.project_id = #{projectId}
+	  	</if>
+	  	<if test="conId != null and conId != ''">
+	  		AND a.team_con_id = #{conId}
+	  	</if>
+	  	<if test="takeDate != null">
+	  		AND DATE_FORMAT(a.out_time, '%Y%m%d') <![CDATA[ <= ]]> DATE_FORMAT(#{takeDate}, '%Y%m%d')
+	  	</if>
+	  	group by b.mtr_code
+	</select>
+	<!-- 劳务班组参照 -->
+	<select id="getTeamList" parameterType="java.util.Map" resultType="com.build.cloud.modules.bs.entity.BsTeamEntity">
+	SELECT
+		t.*,c.id AS conId, c.con_name AS conName
+	FROM
+		bs_team t
+	LEFT JOIN pro_rota r ON r.team_id = t.id
+	RIGHT JOIN (
+	    select 
+	    	a.*,
+	    	b.name as dutyDname 
+	    from 
+	    	pro_contract a
+	    left join
+	    	bs_worker b
+	    on 
+	    	a.duty_id=b.id		
+	    where 
+	    	a.valid='0'
+	    	and a.return_status='0'
+	    	and a.check_status='2'
+	    	<if test="proId == null or proId == ''">
+	    		and a.project_id=#{projectId}
+	    	</if>
+	    	<if test="proId != null and proId != ''">
+		    	and a.project_id in (
+			    	SELECT 
+						id 
+					FROM 
+						bs_project 
+					WHERE 
+						company_id IN (
+							SELECT
+								b.labor_id
+							FROM
+								op_public_project a
+							JOIN 
+								bs_project b 
+							ON 
+								a.id = b.pro_id
+							WHERE
+								a.valid='0'
+								and b.valid='0'
+								and a.id = #{proId}
+						) 
+						and valid='0'
+						AND pro_id = #{proId}
+		    	)
+	    	</if>
+	    	<if test="keywords != null and keywords != ''">
+				AND (
+					b.name like concat(concat("%",#{keywords}),"%")
+					or a.con_name like concat(concat("%",#{keywords}),"%")
+				)
+			</if>
+			) AS c ON c.id = r.contract_id
+			WHERE t.valid ='0' And t.status = '0'
+	</select>
+	<delete id="delete" parameterType="java.lang.String">
+		delete from mat_take_inventory where id = #{id}
+	</delete>
+</mapper>

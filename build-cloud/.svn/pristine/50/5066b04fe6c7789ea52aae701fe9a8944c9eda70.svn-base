@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.build.cloud.modules.common.dao.CommonDao">
+	<select id="selectMaxCode" resultType="java.lang.String" parameterType="java.util.Map">
+		SELECT  MAX(SUBSTR(con_code,length(con_code)-2,length(con_code))) from ${tableName} where  valid='0' 
+		AND con_type=#{conType}
+		and project_id = #{projectId}
+	</select>
+	
+	
+</mapper>

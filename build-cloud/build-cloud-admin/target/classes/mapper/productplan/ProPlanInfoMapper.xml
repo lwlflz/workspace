@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.build.cloud.modules.productplan.dao.ProPlanInfoMapper">
+
+	<!-- 通用查询映射结果 -->
+	<resultMap id="BaseResultMap" type="com.build.cloud.modules.productplan.dto.ProPlanInfo">
+		<id column="id" property="id" />
+		<result column="pro_name" property="proName" />
+		<result column="project_id" property="projectId" />
+		<result column="version" property="version" />
+		<result column="eff_status" property="effStatus" />
+		<result column="activityins_id" property="activityinsId" />
+		<result column="check_fin_time" property="checkFinTime" />
+		<result column="check_status" property="checkStatus" />
+		<result column="return_status" property="returnStatus" />
+		<result column="create_time" property="createTime" />
+		<result column="create_by" property="createBy" />
+		<result column="update_time" property="updateTime" />
+		<result column="update_by" property="updateBy" />
+		<result column="valid" property="valid" />
+	</resultMap>
+	
+	<select id="selectMaxVersionByProjectId" resultType="java.lang.Integer">
+		SELECT MAX(t.version) AS "version" FROM pro_plan_info t 
+		<where>
+			t.project_id = #{projectId} AND t.valid = '0'
+		</where>
+	</select>
+	
+	<delete id="physicsDelete">
+		delete FROM pro_plan_info 
+		<where>
+			id = #{id} 
+		</where>
+	</delete>
+	
+	<!-- <select id="selectMaxVersionAndEffect" resultType="java.lang.Integer">
+		SELECT MAX(t.version) AS "version" FROM pro_plan_info a 
+		WHERE t.project_id = #{projectId} AND t.valid = '0'
+		SELECT * FROM pro_plan_info t 
+		WHERE t.project_id = #{projectId} AND t.valid = '0' AND t.eff_status = '1'
+	</select> -->
+</mapper>

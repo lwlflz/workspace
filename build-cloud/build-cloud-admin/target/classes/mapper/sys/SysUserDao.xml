@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.build.cloud.modules.sys.dao.SysUserDao">
+
+	<!-- 查询用户的所有权限 -->
+	<select id="queryAllPerms" resultType="string">
+		select m.perms from
+		sys_user_role ur
+		LEFT JOIN sys_role_menu rm on ur.role_id = rm.role_id
+		LEFT JOIN sys_menu m on rm.menu_id = m.id
+		where ur.user_id = #{userId}
+	</select>
+
+	<!-- 查询用户的所有菜单ID -->
+	<select id="queryAllMenuId" resultType="string">
+		select distinct
+		rm.id from sys_user_role ur
+		LEFT JOIN sys_role_menu rm on ur.role_id = rm.role_id
+		where ur.user_id = #{userId}
+	</select>
+	
+	<select id="queryByLoginName" resultType="com.build.cloud.modules.sys.entity.SysUserEntity">
+		SELECT
+			sys_user.id,
+			sys_user.login_name,
+			sys_user.user_name,
+			sys_user.`password`,
+			sys_user.salt,
+			sys_user.mobile,
+			sys_user.email,
+			sys_user.valid,
+			sys_user.avatar,
+			sys_user.user_type,
+			sys_user.pwd_update_date,
+			sys_user.last_login_ip,
+			sys_user.last_login_date,
+			sys_user.corp_code,
+			sys_user.corp_name,
+			sys_user.freeze_date,
+			sys_user.freeze_cause,
+			sys_user.remark,
+			sys_user.create_by,
+			sys_user.create_time,
+			sys_user.update_by,
+			sys_user.update_time,
+			sys_user.`status`,
+			sys_user.dept_id,
+			sys_user.company_id,
+			sys_user.departure_date,
+			sys_user.mgr_type 
+		FROM
+			sys_user 
+		WHERE login_name = #{loginName} OR mobile = #{loginName} OR email = #{loginName}
+	</select>
+
+	<delete id="deleteBatch">
+		delete from sys_user where id in
+		<foreach item="userId" collection="array" open="(" separator=","
+			close=")">
+			#{userId}
+		</foreach>
+		;
+		delete from sys_user_role where user_id in
+		<foreach item="userId" collection="array" open="(" separator=","
+			close=")">
+			#{userId}
+		</foreach>
+	</delete>
+	
+	<select id="querUserRoleByUserId" resultType="com.build.cloud.modules.sys.form.SysUserRoleListForm">
+		select 
+			a.id as id,
+			a.role_id as roleId,
+			b.role_code as roleCode,
+			b.role_name as roleName,
+			a.company_id as companyId,
+			c.company_name as companyName	
+		from sys_user_role a
+			left join sys_role b on b.id = a.role_id
+			left join sys_company c on c.id = a.company_id			
+		<if test="userId != null and userId != ''">
+			where a.user_id = #{userId} 
+		</if>
+		
+	</select>
+	
+	
+	
+	<select id="querCompanyByUserIdV1" parameterType="java.util.Map" resultType="java.util.Map">
+			select 
+				com.id as companyId,
+				com.company_name as companyName,
+				com.company_code as companyCode
+				 from sys_company com 			
+			where
+				com.valid = '0' and 
+				com.status = '0' and 
+				com.corp_code = #{corpCode} 			
+	</select>
+	
+	<select id="querCompanyByUserIdV2" parameterType="java.util.Map" resultType="java.util.Map">
+			select 
+				com.id as companyId,
+				com.company_name as companyName,
+				com.company_code as companyCode
+				 from sys_company com 			
+			where
+				com.valid = '0' and 
+				com.status = '0' and 
+				com.corp_code = #{corpCode} 			
+				and com.id in (
+				 select a.company_id 
+				 	from sys_user_role a
+						left join sys_role b on b.id = a.role_id
+						left join sys_company c on c.id = a.company_id								
+					where a.user_id = #{userId} 
+				) 			
+	</select>
+	<select id="selectLaborUserList" resultType="com.build.cloud.modules.sys.form.CompanyUserForm">
+		select 
+			bs.id as id,
+			sys.id as userId,
+			sys.login_name as loginName,
+			bs.`name` as userName,
+			bs.idcard as idNum,
+			bs.area as area,
+			bs.phone as phone
+		from 
+			bs_worker bs 
+		left join 
+			sys_user sys 
+		on
+			bs.user_id = sys.id
+		WHERE  
+			bs.valid = '0' 
+		and  
+			sys.valid = '0'
+		and
+			sys.status = '0'
+		and
+			bs.company_id = #{companyId}
+		<if test="userName != null and userName != ''">
+			and 
+			(	sys.login_name like concat(concat("%",#{userName}),"%")
+				or 
+				bs.`name` like concat(concat("%",#{userName}),"%")
+				or 
+				bs.idcard like concat(concat("%",#{userName}),"%")
+			)
+		</if>
+	</select>
+	
+	<select id="selectEmpUserList" resultType="com.build.cloud.modules.sys.form.CompanyUserForm">
+		select 
+			emp.id as id,
+			sys.id as userId,
+			sys.login_name as loginName,
+			emp.emp_name as userName,
+			emp.id_num as idNum
+		from 
+			sys_employee emp
+		left join 
+			sys_user sys 
+		on
+			emp.user_id = sys.id
+		WHERE emp.valid = '0' 
+			and  sys.valid = '0'
+			and  sys.status = '0'
+		<if test="companyId != null and companyId != ''">
+			and emp.company_id = #{companyId}	
+		</if>
+		<if test="userName != null and userName != ''">
+			and 
+			(	sys.login_name like concat(concat("%",#{userName}),"%")
+				or 
+				emp.emp_name like concat(concat("%",#{userName}),"%")
+				or 
+				emp.id_num like concat(concat("%",#{userName}),"%")
+			)
+		</if>
+	</select>	
+	
+	<select id="selectCorpAdminMenuId" parameterType="java.lang.String" resultType="java.lang.String">
+			SELECT 
+				DISTINCT(c.id) 
+			FROM sys_user t 
+				LEFT JOIN op_cpy_authpack a on a.cpy_id = t.corp_code 
+				LEFT JOIN op_authpack_menu b ON b.pack_id = a.pack_id
+				LEFT JOIN sys_menu c ON c.id = b.menu_id
+				WHERE t.id = #{userId} and t.valid = '0' 
+	</select>
+</mapper>

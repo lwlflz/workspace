@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.build.cloud.modules.ls.dao.LsContractPlandetailDao">
+	
+	<!-- 根据项目查询产计划 -->
+	<select id="selectLayeredPlan" parameterType="java.util.Map" resultType="com.build.cloud.modules.productplan.dto.ProPlanDetail">
+		SELECT
+		  	b.*, 
+			CASE WHEN (b.consplit_id <![CDATA[<>]]> NULL OR b.consplit_id <![CDATA[<>]]> '') AND b.consplit_id = #{conId} THEN true ELSE false END AS 'selected', 
+			CASE WHEN (b.consplit_id <![CDATA[<>]]> NULL OR b.consplit_id <![CDATA[<>]]> '') AND b.consplit_id <![CDATA[<>]]> #{conId} THEN true ELSE false END AS 'enabled'
+		FROM
+		  	pro_plan_info a
+		    LEFT JOIN pro_plan_detail b ON a.id = b.pro_id
+		    LEFT JOIN ls_contract_plandetail c ON c.proplan_unique = b.unique_id
+		WHERE
+		  	a.eff_status = '1'
+		    AND a.valid = '0'
+		    AND a.check_status = '2'
+		    AND a.return_status = '0'
+		    AND b.property_type <![CDATA[<>]]> 'sub_item' 
+		    AND a.project_id = #{projectId}
+	</select>
+	
+	<delete id="deleteByConId" parameterType="java.lang.String">
+		delete from ls_contract_plandetail where con_id=#{conId}
+	</delete>
+	
+	<select id="selectLsConPlan" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT
+		  a.id AS 'id',
+		  d.project_id as 'projectId',
+		  b.wbs_code AS 'wbsCode',
+		  b.wbs_name AS 'wbsName',
+		  b.unique_id AS 'proplanUnique',
+		  b.parent_id AS 'parentId',
+		  b.name_property AS 'nameProperty',
+		  b.property_type AS 'propertyType',
+		  b.plan_begin_date AS 'planBeginDate',
+		  b.plan_end_date AS 'planEndDate',
+		  b.duration,
+		  a.quantities,
+		  a.unit_price AS 'unitPrice',
+		  a.total_price AS 'totalPrice',
+		  a.pay_node AS 'payNode',
+		  c.pay_node AS 'payNodeName',
+		  b.parent_ids AS 'parentIds'
+		FROM
+		   	ls_contract_plandetail a
+		    LEFT JOIN pro_plan_detail b ON a.proplan_unique = b.unique_id
+		    LEFT JOIN pro_plan_info d on b.pro_id=d.id
+		    LEFT JOIN ls_contract_labor_payment c ON a.pay_node = c.id
+		where
+			d.eff_status = '1'
+		    AND d.valid = '0'
+		    AND d.check_status = '2'
+		    AND d.return_status = '0'
+			and a.project_id=#{projectId}
+			and a.con_id=#{conId}    
+	</select>
+	
+	<select id="selectLsConPlanParent" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT
+		  a.id AS 'id',
+		  b.project_id as 'projectId',
+		  a.wbs_code AS 'wbsCode',
+		  a.wbs_name AS 'wbsName',
+		  a.unique_id AS 'uniqueId',
+		  a.parent_id AS 'parentId',
+		  a.name_property AS 'nameProperty',
+		  a.property_type AS 'propertyType',
+		  a.plan_begin_date AS 'planBeginDate',
+		  a.plan_end_date AS 'planEndDate',
+		  a.duration,
+		  a.quantities,
+		  0 AS unitPrice,
+		  0 AS totalPrice,
+		  '' AS payNode,
+		  '' AS payNodeName,
+		  a.parent_ids AS 'parentIds'
+		FROM
+		   	pro_plan_detail a
+		LEFT JOIN 
+			pro_plan_info b 
+		on 
+			a.pro_id=b.id
+		where
+			b.eff_status = '1'
+		    AND b.valid = '0'
+		    AND b.check_status = '2'
+		    AND b.return_status = '0'
+	  		and a.unique_id in 
+	  		<foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+            	#{item}
+       		</foreach>
+        	and b.project_id=#{projectId}
+	</select>
+
+</mapper>

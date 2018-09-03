@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.build.cloud.modules.ls.dao.LsContractLaborDao">
+
+	<select id="findContractLabor" parameterType="java.util.Map" resultType="java.util.Map">
+		<!-- 总包 -->
+		<if test='companyRoleType == "2"'>
+			select 
+				cl.id as id,
+				cl.project_id as projectId,
+				cl.project_name as projectName,
+				cl.con_name as conName,
+				cl.con_code as conCode,
+				cl.con_type as conType,
+				cl.partya_id as partyaId,
+				b1.bussiness_name as partyaName,
+				cl.partyb_id as partybId,
+				b2.bussiness_name as partybName,
+				cl.partyb_leader as partybLeader,
+				cl.partyb_leader_idcard as partybLeaderIdcard,
+				cl.partyb_leader_phone as partybLeaderPhone,
+				cl.address as address,
+				cl.sign_date as signDate,
+				cl.temporary_total as temporaryTotal,
+				cl.unit_money as unitMoney,
+				cl.tax_rate as taxRate,
+				cl.con_money_ntax as conMoneyNtax,
+				cl.con_money_tax as conMoneyTax,
+				cl.con_price_type as conPriceType,
+				cl.start_date as startDate,
+				cl.end_date as endDate,
+				cl.premium_ratio as premiumRatio,
+				cl.con_range as conRange,
+				cl.activityins_id as activityinsId,
+				cl.return_status as returnStatus,
+				cl.check_fin_time as checkFinTime,
+				cl.check_status as checkStatus,
+				cl.create_by as createBy,
+				cl.create_time as createTime,
+				cl.update_by as updateBy,
+				cl.update_time as updateTime,
+				cl.valid as valid
+			from 
+				ls_contract_labor cl
+			LEFT JOIN
+				bs_bussiness b1
+			on 
+				b1.id = cl.partya_id 
+			LEFT JOIN
+				bs_bussiness b2 
+			on 
+				b2.id = cl.partyb_id 	 
+			where 
+				cl.project_id=#{projectId}
+				<if test="conName != null and conName != ''">
+					and cl.con_name like concat(concat("%",#{conName}),"%")
+				</if>
+		</if>
+		<!-- 分包 -->
+		<if test='companyRoleType == "3"'>
+			SELECT
+			  	cl.id as id,
+				#{projectId} as projectId,
+				(select project_name from bs_project where id=#{projectId}) as projectName,
+				cl.con_name as conName,
+				cl.con_code as conCode,
+				cl.con_type as conType,
+				cl.partya_id as partyaId,
+				b1.bussiness_name as partyaName,
+				cl.partyb_id as partybId,
+				b2.bussiness_name as partybName,
+				cl.partyb_leader as partybLeader,
+				cl.partyb_leader_idcard as partybLeaderIdcard,
+				cl.partyb_leader_phone as partybLeaderPhone,
+				cl.address as address,
+				cl.sign_date as signDate,
+				cl.temporary_total as temporaryTotal,
+				cl.unit_money as unitMoney,
+				cl.tax_rate as taxRate,
+				cl.con_money_ntax as conMoneyNtax,
+				cl.con_money_tax as conMoneyTax,
+				cl.con_price_type as conPriceType,
+				cl.start_date as startDate,
+				cl.end_date as endDate,
+				cl.premium_ratio as premiumRatio,
+				cl.con_range as conRange,
+				cl.activityins_id as activityinsId,
+				cl.return_status as returnStatus,
+				cl.check_fin_time as checkFinTime,
+				cl.check_status as checkStatus,
+				cl.create_by as createBy,
+				cl.create_time as createTime,
+				cl.update_by as updateBy,
+				cl.update_time as updateTime,
+				cl.valid as valid
+			FROM
+			  	ls_contract_labor cl
+			LEFT JOIN
+				bs_bussiness b1
+			on 
+				b1.id = cl.partya_id 
+			LEFT JOIN
+				bs_bussiness b2 
+			ON 
+				cl.partyb_id = b2.id
+			WHERE
+			  	cl.project_id IN (
+			  		SELECT
+			    		a.id
+			  		FROM
+			    		bs_project a
+			      	LEFT JOIN 
+			      		op_public_project b 
+			      	ON 
+			      		a.pro_id = b.id
+			  		WHERE
+			    		a.pro_id = #{proId} 
+			    		AND a.company_id = #{beneralcontractorId}
+			    ) 
+			    AND b2.relation_company_id = #{laborId}
+			    <if test="conName != null and conName != ''">
+					and cl.con_name like concat(concat("%",#{conName}),"%")
+				</if>
+		</if>
+	</select>
+
+	<!-- 劳务分包合同（收入） -->
+	<select id="findContractLaborIncome" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT  
+		  	cl.id as id,
+			cl.project_id as projectId,
+			cl.project_name as projectName,
+			(select sum(apply_total) as applyAmount from ls_contract_labor_payment where con_id = cl.id) as applyAmount, <!-- 累计申请金额 -->
+			(select sum(pay_total) as applyCollection from ls_contract_labor_payment where con_id = cl.id) as applyCollection,<!-- 已收款金额 -->
+			(select sum(apply_total) as applyAmount from ls_contract_labor_payment where con_id = cl.id) as onCollection,<!-- 应收未收金额 -->
+			cl.con_name as conName,
+			cl.con_code as conCode,
+			cl.con_type as conType,
+			cl.partya_id as partyaId,
+			b1.bussiness_name as partyaName,
+			cl.partyb_id as partybId,
+			b2.bussiness_name as partybName,
+			cl.partyb_leader as partybLeader,
+			cl.partyb_leader_idcard as partybLeaderIdcard,
+			cl.partyb_leader_phone as partybLeaderPhone,
+			cl.address as address,
+			cl.sign_date as signDate,
+			cl.temporary_total as temporaryTotal,
+			cl.unit_money as unitMoney,
+			cl.tax_rate as taxRate,
+			cl.con_money_ntax as conMoneyNtax,
+			cl.con_money_tax as conMoneyTax,
+			cl.con_price_type as conPriceType,
+			cl.start_date as startDate,
+			cl.end_date as endDate,
+			cl.premium_ratio as premiumRatio,
+			cl.con_range as conRange,
+			cl.activityins_id as activityinsId,
+			cl.return_status as returnStatus,
+			cl.check_fin_time as checkFinTime,
+			cl.check_status as checkStatus,
+			cl.create_by as createBy,
+			cl.create_time as createTime,
+			cl.update_by as updateBy,
+			cl.update_time as updateTime,
+			cl.valid as valid
+		FROM 
+			ls_contract_labor cl
+		LEFT JOIN
+			bs_bussiness b1
+		on 
+			b1.id = cl.partya_id 
+		LEFT JOIN
+			bs_bussiness b2 
+		on 
+			b2.id = cl.partyb_id 
+		LEFT JOIN
+			bs_project p 
+		on
+			p.id = cl.project_id
+		where 
+			cl.valid = '0'
+		and
+			cl.return_status = '0'
+		<if test="companyId != null and companyId != ''">
+			and cl.project_id in (select id from bs_project where company_id=#{companyId})
+		</if>
+		<if test="conType != null and conType != ''">
+			and cl.con_type = #{conType}
+		</if>
+		<if test="keywords != null and keywords != ''">
+			and (cl.con_name like concat(concat("%",#{keywords}),"%") or cl.project_name like concat(concat("%",#{keywords}),"%"))
+		</if>
+		<if test="conName != null and conName != ''">
+			and cl.con_name like concat(concat("%",#{conName}),"%")
+		</if>
+		<if test="projectId != null and projectId != ''">
+			and cl.project_id = #{projectId}
+		</if>
+		<if test="checkStatus != null and checkStatus != ''">
+			and cl.check_status = #{checkStatus}
+		</if>
+	</select>
+	
+	<!-- 劳务分包合同（支出） -->
+	<select id="findContractLaborSpending" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT  
+		  	cl.id as id,
+			cl.project_id as projectId,
+			cl.project_name as projectName,
+			(select sum(apply_total) from ls_contract_labor_payment where con_id = cl.id) as applyAmount, <!-- 累计申请金额 -->
+			(select sum(pay_total) from ls_contract_labor_payment where con_id = cl.id) as applyPayment,<!-- 已付款金额 -->
+			(select sum(apply_total) from ls_contract_labor_payment where con_id = cl.id) as onPayment,<!-- 应付未付金额 -->
+			cl.con_name as conName,
+			cl.con_code as conCode,
+			cl.con_type as conType,
+			cl.partya_id as partyaId,
+			b1.bussiness_name as partyaName,
+			cl.partyb_id as partybId,
+			b2.bussiness_name as partybName,
+			cl.partyb_leader as partybLeader,
+			cl.partyb_leader_idcard as partybLeaderIdcard,
+			cl.partyb_leader_phone as partybLeaderPhone,
+			cl.address as address,
+			cl.sign_date as signDate,
+			cl.temporary_total as temporaryTotal,
+			cl.unit_money as unitMoney,
+			cl.tax_rate as taxRate,
+			cl.con_money_ntax as conMoneyNtax,
+			cl.con_money_tax as conMoneyTax,
+			cl.con_price_type as conPriceType,
+			cl.start_date as startDate,
+			cl.end_date as endDate,
+			cl.premium_ratio as premiumRatio,
+			cl.con_range as conRange,
+			cl.activityins_id as activityinsId,
+			cl.return_status as returnStatus,
+			cl.check_fin_time as checkFinTime,
+			cl.check_status as checkStatus,
+			cl.create_by as createBy,
+			cl.create_time as createTime,
+			cl.update_by as updateBy,
+			cl.update_time as updateTime,
+			cl.valid as valid
+		FROM 
+			ls_contract_labor cl
+		LEFT JOIN
+			bs_bussiness b1
+		on 
+			b1.id = cl.partya_id 
+		LEFT JOIN
+			bs_bussiness b2 
+		on 
+			b2.id = cl.partyb_id 
+		LEFT JOIN
+			bs_project p 
+		on
+			p.id = cl.project_id
+		where 
+			cl.valid = '0'
+		and
+			cl.return_status = '0'
+		<if test="companyId != null and companyId != ''">
+			and cl.project_id in (select id from bs_project where company_id=#{companyId})
+		</if>
+		<if test="conType != null and conType != ''">
+			and cl.con_type = #{conType}
+		</if>
+		<if test="conName != null and conName != ''">
+			and cl.con_name like concat(concat("%",#{conName}),"%")
+		</if>
+		<if test="checkStatus != null and checkStatus != ''">
+			and cl.check_status = #{checkStatus}
+		</if>
+		<if test="projectId != null and projectId != ''">
+			and cl.project_id = #{projectId}
+		</if>
+		<if test="keywords != null and keywords != ''">
+			and (cl.con_name like concat(concat("%",#{keywords}),"%") or cl.project_name like concat(concat("%",#{keywords}),"%"))
+		</if>
+	</select>
+	
+	<select id="getContractLaborById" resultType="com.build.cloud.modules.ls.entity.LsContractLaborEntity" parameterType="string">
+	SELECT  
+		  	cl.id as id,
+			cl.project_id as projectId,
+			cl.project_name as projectName,
+			cl.con_name as conName,
+			cl.con_code as conCode,
+			cl.con_type as conType,
+			cl.partya_id as partyaId,
+			b1.bussiness_name as partyaName,
+			cl.partyb_id as partybId,
+			b2.bussiness_name as partybName,
+			cl.partyb_leader as partybLeader,
+			cl.partyb_leader_idcard as partybLeaderIdcard,
+			cl.partyb_leader_phone as partybLeaderPhone,
+			cl.address as address,
+			cl.sign_date as signDate,
+			cl.temporary_total as temporaryTotal,
+			cl.unit_money as unitMoney,
+			cl.tax_rate as taxRate,
+			cl.con_money_ntax as conMoneyNtax,
+			cl.con_money_tax as conMoneyTax,
+			cl.con_price_type as conPriceType,
+			cl.start_date as startDate,
+			cl.end_date as endDate,
+			cl.premium_ratio as premiumRatio,
+			cl.con_range as conRange,
+			cl.activityins_id as activityinsId,
+			cl.return_status as returnStatus,
+			cl.check_fin_time as checkFinTime,
+			cl.check_status as checkStatus,
+			cl.create_by as createBy,
+			cl.create_time as createTime,
+			cl.update_by as updateBy,
+			cl.update_time as updateTime,
+			cl.valid as valid
+		FROM 
+			ls_contract_labor cl
+		LEFT JOIN
+			bs_bussiness b1
+		on 
+			b1.id = cl.partya_id 
+		LEFT JOIN
+			bs_bussiness b2 
+		on 
+			b2.id = cl.partyb_id 
+		where 
+			cl.id = #{id}
+	</select>
+	
+	<!-- 劳务分包合同（不区分收入、支出） -->
+	<select id="getContractLaborAll" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT  
+		  	cl.id as id,
+			cl.project_id as projectId,
+			cl.project_name as projectName,
+			cl.con_name as conName,
+			cl.con_code as conCode,
+			cl.con_type as conType,
+			cl.partya_id as partyaId,
+			b1.bussiness_name as partyaName,
+			cl.partyb_id as partybId,
+			b2.bussiness_name as partybName,
+			cl.partyb_leader as partybLeader,
+			cl.partyb_leader_idcard as partybLeaderIdcard,
+			cl.partyb_leader_phone as partybLeaderPhone,
+			cl.address as address,
+			cl.sign_date as signDate,
+			cl.temporary_total as temporaryTotal,
+			cl.unit_money as unitMoney,
+			cl.tax_rate as taxRate,
+			cl.con_money_ntax as conMoneyNtax,
+			cl.con_money_tax as conMoneyTax,
+			cl.con_price_type as conPriceType,
+			cl.start_date as startDate,
+			cl.end_date as endDate,
+			cl.premium_ratio as premiumRatio,
+			cl.con_range as conRange,
+			cl.activityins_id as activityinsId,
+			cl.return_status as returnStatus,
+			cl.check_fin_time as checkFinTime,
+			cl.check_status as checkStatus,
+			cl.create_by as createBy,
+			cl.create_time as createTime,
+			cl.update_by as updateBy,
+			cl.update_time as updateTime,
+			cl.valid as valid
+		FROM 
+			ls_contract_labor cl
+		LEFT JOIN
+			bs_bussiness b1
+		on 
+			b1.id = cl.partya_id 
+		LEFT JOIN
+			bs_bussiness b2 
+		on 
+			b2.id = cl.partyb_id 
+		LEFT JOIN
+			bs_project p 
+		on
+			p.id = cl.project_id
+		where 
+			cl.valid = '0' 
+		<if test="companyId != null and companyId != ''">
+			and cl.project_id in (select id from bs_project where company_id=#{companyId})
+		</if>
+		<if test="conName != null and conName != ''">
+			and cl.con_name like concat(concat("%",#{conName}),"%")
+		</if>
+		<if test="projectId != null and projectId != ''">
+			and cl.project_id = #{projectId}
+		</if>
+		<if test="conType != null and conType != ''">
+			and cl.con_type = #{conType}
+		</if>
+		<if test="return_status != null and return_status != ''">
+			and cl.return_status = #{returnStatus}
+		</if>
+		<if test="check_status != null and check_status != ''">
+			and cl.check_status = #{checkStatus}
+		</if>
+	</select>
+</mapper>

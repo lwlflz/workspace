@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.build.cloud.modules.sys.dao.SysCompanyProjectDao">
+	<select id="findPanyProjectByCompanyId" resultType="com.build.cloud.modules.sys.entity.SysCompanyProjectEntity" parameterType="java.util.Map">
+		SELECT
+			cp.id as id,
+			cp.project_ids as projectIds
+		FROM
+			sys_company_project cp
+		LEFT JOIN
+			sys_user_role ur
+		ON
+			cp.userrole_id = ur.id
+		WHERE
+			ur.company_id = #{companyId}
+		AND
+			ur.user_id = #{userId}
+	</select>
+	
+<!-- 	<select id="findPanyProjectIdByPanyId" resultType="com.build.cloud.modules.sys.entity.SysUserRoleEntity" parameterType="java.lang.String"> -->
+<!-- 		SELECT -->
+<!-- 			cp.id -->
+<!-- 		FROM -->
+<!-- 			sys_company_project cp -->
+<!-- 		LEFT JOIN -->
+<!-- 			sys_user_role ur -->
+<!-- 		ON -->
+<!-- 			cp.userrole_id = ur.id -->
+<!-- 		WHERE -->
+<!-- 			ur.company_id =#{companyId} -->
+<!-- 	</select> -->
+</mapper>

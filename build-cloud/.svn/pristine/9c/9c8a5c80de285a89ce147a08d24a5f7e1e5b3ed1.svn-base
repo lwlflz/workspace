@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.build.cloud.modules.psn.dao.PsnControlRulesMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.build.cloud.modules.psn.entity.PsnControlRulesEntity">
+        <id column="id" property="id" />
+        <result column="company_id" property="companyId" />
+        <result column="child_age" property="childAge" />
+        <result column="is_child_age" property="isChildAge" />
+        <result column="man_retire_age" property="manRetireAge" />
+        <result column="is_man_age" property="isManAge" />
+        <result column="feman_retire_age" property="femanRetireAge" />
+        <result column="is_feman_age" property="isFemanAge" />
+        <result column="is_check_rules" property="isCheckRules" />
+        <result column="is_photo" property="isPhoto" />
+        <result column="is_educat" property="isEducat" />
+        <result column="educat_date" property="educatDate" />
+        <result column="is_educat_date" property="isEducatDate" />
+        <result column="is_attend" property="isAttend" />
+        <result column="attend_date" property="attendDate" />
+        <result column="is_attend_date" property="isAttendDate" />
+        <result column="team_attend" property="teamAttend" />
+        <result column="is_team_attend" property="isTeamAttend" />
+        <result column="company_attend" property="companyAttend" />
+        <result column="is_company_attend" property="isCompanyAttend" />
+        <result column="continue_hours" property="continueHours" />
+        <result column="is_continue_hours" property="isContinueHours" />
+        <result column="night_timeout" property="nightTimeout" />
+        <result column="is_night_timeout" property="isNightTimeout" />
+        <result column="continue_date" property="continueDate" />
+        <result column="continue_date_hours" property="continueDateHours" />
+        <result column="is_continue" property="isContinue" />
+    </resultMap>
+
+</mapper>

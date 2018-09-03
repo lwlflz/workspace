@@ -1,0 +1,76 @@
+package com.build.cloud.common.utils;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import com.baomidou.mybatisplus.plugins.Page;
+import com.build.cloud.common.xss.SQLFilter;
+
+import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.StrUtil;
+/**
+ * @ClassName: Query
+ * @Description: 查询参数
+ * @author: liutao
+ * @date: 2018年3月16日 下午12:29:01
+ * @param <T>
+ */
+public class Query<T> extends LinkedHashMap<String, Object> {
+	private static final long serialVersionUID = 1L;
+	private static final String _PAGE = "page"; // 查看第几页
+	private static final String _LIMIT = "limit"; // 设置分页展示总条数
+	/**
+	 * mybatis-plus分页参数
+	 */
+	private Page<T> page;
+	/**
+	 * 当前页码
+	 */
+	private int currPage = 1;
+	/**
+	 * 每页条数
+	 */
+	private int limit = 10;
+	public Query(Map<String, Object> params) {
+//		params = StringUtil.mapKeyToUnderline(params);
+		this.putAll(params);
+		// 分页参数
+		if (params.get(_PAGE) != null) {
+			if(StrUtil.isNotBlank(params.get(_PAGE).toString())){
+				currPage = MapUtil.getInt(params, _PAGE);
+			}
+		}
+		if (params.get(_LIMIT) != null) {
+			if(StrUtil.isNotBlank(params.get(_LIMIT).toString())){
+				limit = MapUtil.getInt(params, _LIMIT);
+			}
+		}
+		this.put("offset", (currPage - 1) * limit);
+		this.put(_PAGE, currPage);
+		this.put(_LIMIT, limit);
+		// 防止SQL注入（因为sidx、order是通过拼接SQL实现排序的，会有SQL注入风险）
+		String sidx = SQLFilter.sqlInject(MapUtil.getStr(params, "sidx"));
+		if (StrUtil.isNotBlank(sidx)) {
+			sidx = StrUtil.toUnderlineCase(sidx);
+		}
+		String order = SQLFilter.sqlInject(MapUtil.getStr(params, "order"));
+		this.put("sidx", sidx);
+		this.put("order", order);
+		// mybatis-plus分页
+		this.page = new Page<T>(currPage, limit);
+		// 排序
+		if (StrUtil.isNotBlank(sidx)) {
+			this.page.setOrderByField(sidx); // order by time,id desc/asc
+			this.page.setAsc("ASC".equalsIgnoreCase(order));
+		}
+	}
+	public Page<T> getPage() {
+		return page;
+	}
+	public int getCurrPage() {
+		return currPage;
+	}
+	public int getLimit() {
+		return limit;
+	}
+	
+}

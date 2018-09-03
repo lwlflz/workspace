@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.build.cloud.modules.mat.dao.MatPurchaseStockInDao">
+	
+	<select id="queryPageList" parameterType="java.util.Map" resultType="com.build.cloud.modules.mat.entity.MatPurchaseStockInEntity">
+		select 
+			a.*,
+			b.bussiness_name as supplier_name 
+		from 
+			mat_purchase_stock_in a 
+		left 
+			join bs_bussiness b 
+		on 
+		a.supplier=b.id 
+		where 
+			a.valid='0'
+			<if test="projectId != null and projectId !=''">
+				and a.project_id=#{projectId}
+			</if>
+			<if test="companyId != null or companyId !=''">
+				and a.project_id in (select id from bs_project where company_id=#{companyId})
+			</if>
+			<if test="planMonth != null and planMonth !=''">
+				and DATE_FORMAT(a.create_time, '%Y-%m')=#{planMonth}
+			</if>
+		order by create_time desc
+	</select>
+	
+	<select id="selectByKey" parameterType="java.lang.String" resultType="com.build.cloud.modules.mat.entity.MatPurchaseStockInEntity">
+		select 
+			a.*,
+			b.bussiness_name as supplier_name 
+		from 
+			mat_purchase_stock_in a 
+		left 
+			join bs_bussiness b 
+		on 
+		a.supplier=b.id 
+		where 
+			a.valid='0'
+			and a.id=#{id}
+	</select>
+	
+	<select id="selectAlreadyList" parameterType="java.util.Map" resultType="java.util.Map">
+		select 
+			b.pol_id as polId,
+			sum(warehous_number) as sumWarehousNumber 
+		from 
+			mat_purchase_stock_in a 
+		left join 
+			mat_purchase_stock_inlist b
+		on 
+			a.id=b.warehous_id
+		where 
+			a.return_status='0' 
+			and a.check_status='2'
+			and a.valid='0'
+			and b.pol_id in(
+				select 
+					b.pol_id 
+				from 
+					mat_purchase_stock_in a 
+				left join 
+					mat_purchase_stock_inlist b
+				on 
+					a.id=b.warehous_id
+				where 
+					b.warehous_id=#{id} 
+			)
+			group by b.pol_id
+	</select>
+
+</mapper>

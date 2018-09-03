@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.build.cloud.modules.mat.dao.MatPurchaseOrderDao">
+	<select id="selectMaxBillCode" resultType="java.lang.String">
+		select max(bill_code) from mat_purchase_order
+	</select>	
+	<select id="selectInfoById" parameterType="java.lang.String" resultType="com.build.cloud.modules.mat.entity.MatPurchaseOrderEntity">
+		SELECT
+			a.*,
+			b.bussiness_name AS supplierName
+		FROM
+			mat_purchase_order a
+		LEFT JOIN
+		    bs_bussiness b
+		ON
+		    b.id = a.supplier
+		WHERE
+		  a.valid='0'
+		<if test="_parameter != null and _parameter !=''">
+			and a.id=#{_parameter}
+		</if>
+	</select>
+	<select id="selectPage" parameterType="java.util.Map" resultType="com.build.cloud.modules.mat.entity.MatPurchaseOrderEntity">
+		select a.*,
+			b.bussiness_name AS supplierName
+		from 
+			mat_purchase_order a
+		LEFT JOIN
+		  bs_bussiness b
+		ON
+		  b.id = a.supplier
+		where a.valid='0'
+			<if test="projectId != null and projectId !=''">
+				and project_id=#{projectId}
+			</if>
+			<!-- 采购类型 -->
+			<if test="purchaseType != null and purchaseType!=''">
+				and a.order_type =#{purchaseType}
+			</if>
+			<if test="projectId == null or projectId ==''">
+				and a.project_id in (select id from bs_project where company_id=#{companyId})
+			</if>
+			<if test="planMonth != null and planMonth !=''">
+				and a.plan_month like #{planMonth}
+			</if>
+			<if test="checkStatus !=null and checkStatus!=''">
+				and a.check_status = '2' and a.return_status='0'
+			</if>
+			order by create_time desc
+	</select>
+	
+	<!-- 用于入库参照 -->
+	<select id="getOrderList" parameterType="java.util.Map" resultType="com.build.cloud.modules.mat.entity.MatPurchaseOrderEntity">
+		select distinct * from 
+		(
+			select 
+				a.*,
+				b.bussiness_name AS supplierName 
+			from 
+				mat_purchase_order a
+			left join
+				bs_bussiness b
+			on 	
+				b.id = a.supplier
+			where 
+				a.valid='0'
+				and a.check_status = '2' 
+				and a.return_status = '0'
+				and a.order_type='2'
+				<if test="projectId != null and projectId !=''">
+					and a.project_id=#{projectId}
+				</if>
+				<if test="planMonth != null and planMonth !=''">
+					and a.plan_month=#{planMonth}
+				</if>
+			 <!-- 如果是总包还需要取公共项目下由建设单位创建的甲供订单 -->
+			 <if test='companyRoleType == "2"'>
+				<if test="proId != null and proId != ''">
+					UNION ALL
+					select
+						a.*,
+						b.bussiness_name AS supplierName 
+					from 
+						mat_purchase_order a
+					left join
+						bs_bussiness b
+					on 	
+						b.id = a.supplier
+					where
+						a.valid='0'
+						and a.check_status = '2' 
+						and a.return_status = '0'
+						and a.order_type = '1'
+						and a.project_id in (
+							select 
+								b.id 
+							from 
+								op_public_project a 
+							join 
+								bs_project b 
+							on 
+								a.id=b.pro_id 
+							WHERE 
+								a.id=#{proId} 
+								and b.company_id=#{constructionId}
+						)
+						<if test="planMonth != null and planMonth !=''">
+							and a.plan_month=#{planMonth}
+						</if>
+				</if>
+			</if>
+		) f
+	</select>
+</mapper>

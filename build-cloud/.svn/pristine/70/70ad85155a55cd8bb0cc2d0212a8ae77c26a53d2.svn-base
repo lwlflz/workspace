@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.build.cloud.modules.mat.dao.MatPurchasePlanSumlistDao">
+	<select id="selectByIds" parameterType="java.util.List" resultType="com.build.cloud.modules.mat.entity.MatPurchasePlanSumListEntity">
+		select mpl.* from mat_purchase_plan_sumlist mpl
+		where mpl.id in
+		<foreach collection="list" item="id" open="(" close=")" separator="," index="">
+			#{id}
+		</foreach>
+		ORDER BY mpl.plan_number
+	</select>
+</mapper>

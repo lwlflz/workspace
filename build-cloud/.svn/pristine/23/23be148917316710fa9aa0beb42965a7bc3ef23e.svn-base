@@ -1,0 +1,17 @@
+package com.build.cloud.modules.bs.service;
+
+import java.util.Map;
+
+import com.baomidou.mybatisplus.service.IService;
+import com.build.cloud.common.utils.PageUtils;
+import com.build.cloud.modules.bs.entity.BsBussinessEntity;
+
+public interface IBsBussinessService extends IService<BsBussinessEntity>{
+	PageUtils queryPage(Map<String, Object> params);
+
+	/**
+	 * @param params
+	 * @return
+	 */
+	PageUtils partbJoin(Map<String, Object> params);
+}

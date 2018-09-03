@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.build.cloud.modules.sys.dao.SysMenuDao">
+
+	<sql id="Base_Column_List">
+		t.id,
+		t.parent_id,
+		t.`name`,
+		t.url,
+		t.perms,
+		t.type,
+		t.icon,
+		t.order_num
+	</sql>
+
+	<select id="queryListParentId" resultType="com.build.cloud.modules.sys.entity.SysMenuEntity">
+		select <include refid="Base_Column_List" />,t.is_sys as isSys from sys_menu AS t where parent_id = #{parentId} order by order_num asc
+	</select>
+
+	<select id="queryNotButtonList" resultType="com.build.cloud.modules.sys.entity.SysMenuEntity">
+		select <include refid="Base_Column_List" />,t.is_sys as isSys from sys_menu AS t where type != 2 order by order_num asc
+	</select>
+	
+	<!-- 根据角色ID 获取当前角色所有的权限信息 -->
+	<select id="finRolePermission" parameterType="String" resultType="com.build.cloud.modules.sys.entity.SysMenuEntity">
+		SELECT
+			m.id,
+			m.parent_id as parentId,
+			m.name,
+			m.url,
+			m.perms,
+			m.type,
+			m.icon,
+			m.is_sys as isSys,
+			m.order_num as orderNum,
+			m.valid,
+			m.create_by as createBy,
+			m.create_time as createTime,
+			m.update_by as updateBy,
+			m.update_time as updateTime
+		FROM
+			sys_menu m
+		LEFT JOIN 
+			sys_role_menu rm 
+		ON 
+			m.id = rm.menu_id
+		LEFT JOIN 
+			sys_role r 
+		ON 
+			r.id = rm.role_id
+		WHERE
+			m.valid = '0'
+		and
+			r.id = #{roleId}
+	</select>
+	
+	<delete id="deleteMenuRoleByMenuId" parameterType="String">
+		DELETE FROM sys_role_menu WHERE menu_id = #{menuId} 
+	</delete>
+	
+	<select id="selectListParentName" resultType="com.build.cloud.modules.sys.entity.SysMenuEntity">
+		SELECT <include refid="Base_Column_List" />,t.is_sys as isSys, p.`name` AS parentName FROM sys_menu AS t
+		LEFT JOIN sys_menu AS p ON p.id = t.parent_id  where t.valid = '0' order by order_num asc
+	</select>
+	
+	<select id="selectMenuByUserId" parameterType="String" resultType="java.util.Map">
+		SELECT
+			sm.id,
+			sm.`name`,
+			sm.url,
+			sm.perms,
+			sm.is_sys as isSys,
+			sm.type 
+		FROM
+			sys_menu AS sm
+			LEFT JOIN sys_role_menu AS srm ON sm.id = srm.menu_id
+			LEFT JOIN sys_user_role AS sur ON srm.role_id = sur.role_id 
+		WHERE
+			sm.valid = '0' 
+			AND sur.user_id = #{userId}
+		GROUP BY
+			sm.id
+	</select>
+	
+	<select id="selectCorpMenuIds" parameterType="java.lang.String" resultType="java.lang.String">
+			SELECT 
+				DISTINCT(c.id) 
+			FROM op_cpy_authpack t 
+				LEFT JOIN op_authpack_menu b ON b.pack_id = t.pack_id 
+				LEFT JOIN sys_menu c ON c.id = b.menu_id and c.valid = '0' 
+				WHERE t.cpy_id = #{corpCode} 
+	</select>
+</mapper>

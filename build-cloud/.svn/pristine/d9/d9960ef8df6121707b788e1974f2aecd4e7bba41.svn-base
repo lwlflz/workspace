@@ -1,0 +1,133 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.build.cloud.modules.person.dao.PsnReportMapper">
+
+	<select id="getWorkTeamInfoByPro" resultType="com.build.cloud.modules.person.dto.WorkTeamInfo">
+		select project_id,p.project_name,team_id,r.team_name,e.work_count as psn_num
+
+		from pro_rota t
+		LEFT JOIN (SELECT a.rota_id,COUNT(*) AS work_count FROM pro_rota_worker a GROUP BY a.rota_id) e ON e.rota_id = t.id 
+		left join bs_project p on t.project_id = p.id
+		left join bs_team r on t.team_id = r.id
+		
+		WHERE t.valid = '0'
+		<if test="companyId !=null and companyId != ''">
+			AND p.company_id = #{companyId}
+		</if>
+		<if test="projectId !=null and projectId != ''">
+			AND t.project_id = #{projectId}
+		</if>
+		group by t.project_id,t.team_id
+		
+	</select>
+
+	<select id="getWorkTeamInfoByTList"  parameterType="java.lang.String" resultType="com.build.cloud.modules.person.dto.WorkTeamInfo">
+		SELECT
+		 a.project_id
+		 ,a.unique_id
+		 ,a.parent_ids as parent_id
+		 ,0 as psn_num
+		 ,c.gross as finishproNum
+		 ,c.total_price as price
+		 ,a.quantities as build_area
+		 ,d.id as workorder_id
+		 ,d.work_status,a.team_id
+		FROM 
+			(
+			select k.name_property,k.consplit_id,k.id,k.unique_id,k.parent_ids,b.project_id ,k.quantities,q.team_id
+				from pro_plan_detail k 
+        join pro_plan_info b on k.pro_id = b.id 
+        join pro_rota q on k.consplit_id = q.contract_id
+				where k.valid = 0 and b.eff_status = '1' and b.valid = 0 and q.valid = '0'  
+				and q.team_id in
+				
+				<foreach collection="list" index="index" item="item" open="(" separator="," close=")">  
+		        	#{item} 
+		    	</foreach> 
+				
+				and k.consplit_id is not null and k.consplit_id <![CDATA[<> ]]>'' 
+				and k.property_type = 'sub_item' and k.is_worked =1
+
+			) a
+			left join pro_contract_plandetail c on a.unique_id = c.proplan_unique and c.valid = 0
+			left join pro_work_order d on a.unique_id = d.proplan_unique
+			where c.valid = 0 and d.valid = 0
+			
+	</select>
+	
+	<select id="getBuildNameByPro"  resultType="com.build.cloud.modules.person.dto.WorkTeamInfo">
+		
+		select a.unique_id
+			,a.wbs_name 
+		
+		from pro_plan_detail a
+    	left JOIN pro_plan_info b on a.pro_id = b.id
+		where a.valid = 0 and b.valid = 0 
+		and a.property_type = 'build'
+		and b.project_id = #{projectId} 
+		
+	</select>
+	
+	<select id="getWorkRecordDaysByTeam"  resultType="com.build.cloud.modules.person.dto.WorkTeamInfo">
+		
+		select a.project_id,a.team_id,sum(a.price) as price,sum(a.finish_value) as finish_value from (
+			select 
+				project_id
+				,team_id
+				,case when standard_work_hours=null then 0 else work_number*work_hours/standard_work_hours end as price
+				,case when standard_overtime_hours=null then 0 else overtime_number*overtime_hours/standard_overtime_hours end as finish_value
+				
+				from pro_worker_record  
+				where valid = 0
+				and project_id = #{projectId}
+				and team_id = #{teamId}
+			) a 	
+			GROUP BY a.project_id,a.team_id
+		
+	</select>
+	
+	<select id="getItemValueByPro"  resultType="java.util.HashMap">
+		
+		select kk.project_id
+			,ifnull(sum(kk.quantities),0)/10000 as finishValue
+			,ifnull(sum(kk.record_num),0) as workRecord
+			,ifnull(sum(kk.quantities)/sum(kk.record_num),0) as dayValue
+			,ifnull(sum(kk.workorder_num),0) as workorderNum 
+		
+		from (
+			select a.project_id,b.total_price * c.quantities as quantities,null as record_num,null as workorder_num 
+			from pro_work_order  a
+			left join pro_contract_plandetail b on a.proplan_unique = b.proplan_unique
+			left join pro_plan_detail c on a.proplan_unique = c.unique_id
+      		left join pro_plan_info d on c.pro_id = d.id 
+			
+			where a.work_status = '5' and a.valid = '0' and b.valid = '0'  and d.valid = '0' and d.eff_status = '1' and a.project_id = #{projectId}
+			
+			union all
+			
+			select a.project_id,null as quantities,sum(a.price)+sum(a.finish_value) as record_num,null as workorder_num from (
+						select 
+							project_id
+							,case when standard_work_hours=null then 0 else work_number*work_hours/standard_work_hours end as price
+							,case when standard_overtime_hours=null then 0 else overtime_number*overtime_hours/standard_overtime_hours end as finish_value
+							
+							from pro_worker_record  
+							where valid = 0
+							and project_id = #{projectId}
+						
+						) a
+			GROUP BY a.project_id
+			
+			union all
+			
+			select a.project_id,null as quantities,null as record_num,COUNT(id) as workorder_num from pro_work_order a
+			where a.valid = '0' and a.work_status in (2,3,4)
+			and a.project_id = #{projectId}
+			group by a.project_id
+		) kk
+		group by kk.project_id
+		
+	</select>
+	
+	
+</mapper>

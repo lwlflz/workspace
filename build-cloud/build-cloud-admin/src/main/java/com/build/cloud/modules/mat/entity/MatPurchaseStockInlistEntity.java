@@ -1,0 +1,305 @@
+package com.build.cloud.modules.mat.entity;
+
+import java.math.BigDecimal;
+import java.util.Date;
+
+import com.baomidou.mybatisplus.annotations.TableField;
+import com.baomidou.mybatisplus.annotations.TableId;
+import com.baomidou.mybatisplus.activerecord.Model;
+import com.baomidou.mybatisplus.annotations.TableName;
+import com.baomidou.mybatisplus.enums.IdType;
+import com.build.cloud.common.validator.group.AddGroup;
+import com.build.cloud.common.validator.group.UpdateGroup;
+
+import java.io.Serializable;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+
+/**
+ * <p>
+ * 入库详情表
+ * </p>
+ *
+ * @author gongjy
+ * @since 2018-07-09
+ */
+@TableName("mat_purchase_stock_inlist")
+public class MatPurchaseStockInlistEntity extends Model<MatPurchaseStockInlistEntity> {
+
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * 主键
+     */
+    @TableId(type = IdType.ID_WORKER_STR)
+    private String id;
+    /**
+     * 入库id
+     */
+    @TableField("warehous_id")
+    @NotBlank(message = "入库id不能为空", groups = {UpdateGroup.class})
+    private String warehousId;
+    /**
+     * 采购订单详情id
+     */
+    @TableField("pol_id")
+    @NotBlank(message = "采购订单详情id不能为空", groups = {AddGroup.class, UpdateGroup.class})
+    private String polId;
+    /**
+     * 材料分类编码
+     */
+    @TableField("mtr_kind_code")
+    @NotBlank(message = "材料分类编码不能为空", groups = {AddGroup.class, UpdateGroup.class})
+    private String mtrKindCode;
+    /**
+     * 材料分类名称
+     */
+    @TableField("mtr_kind_name")
+    @NotBlank(message = "材料分类名称不能为空", groups = {AddGroup.class, UpdateGroup.class})
+    private String mtrKindName;
+    /**
+     * 材料编码
+     */
+    @TableField("mtr_code")
+    @NotBlank(message = "材料编码不能为空", groups = {AddGroup.class, UpdateGroup.class})
+    private String mtrCode;
+    /**
+     * 材料名称
+     */
+    @TableField("mtr_name")
+    @NotBlank(message = "材料名称不能为空", groups = {AddGroup.class, UpdateGroup.class})
+    private String mtrName;
+    /**
+     * 规格
+     */
+    @NotBlank(message = "规格不能为空", groups = {AddGroup.class, UpdateGroup.class})
+    private String specs;
+    /**
+     * 计量单位编码
+     */
+    @TableField("measure_code")
+    @NotBlank(message = "计量单位编码不能为空", groups = {AddGroup.class, UpdateGroup.class})
+    private String measureCode;
+    /**
+     * 计量单位名称
+     */
+    @TableField("measure_name")
+    @NotBlank(message = "计量单位名称不能为空", groups = {AddGroup.class, UpdateGroup.class})
+    private String measureName;
+    /**
+     * 入库数量
+     */
+    @TableField("warehous_number")
+    @NotNull(message = "入库数量不能为空", groups = {AddGroup.class, UpdateGroup.class})
+    private BigDecimal warehousNumber;
+    /**
+     * 入库时间
+     */
+    @TableField("warehous_time")
+    private Date warehousTime;
+    /**
+     * 税率%
+     */
+    @TableField("tax_rate")
+    private BigDecimal taxRate;
+    /**
+     * 单价（无税）
+     */
+    @TableField("unit_price_ntax")
+    @NotNull(message = "单价（无税）不能为空", groups = {AddGroup.class, UpdateGroup.class})
+    private BigDecimal unitPriceNtax;
+    /**
+     * 单价（含税）
+     */
+    @TableField("unit_price_tax")
+    @NotNull(message = "单价（含税）不能为空", groups = {AddGroup.class, UpdateGroup.class})
+    private BigDecimal unitPriceTax;
+    /**
+     * 合价（无税）
+     */
+    @TableField("total_money_ntax")
+    private BigDecimal totalMoneyNtax;
+    /**
+     * 合价（含税）
+     */
+    @TableField("total_money_tax")
+    private BigDecimal totalMoneyTax;
+    /**
+	 * 订单数量
+	 */
+    @TableField(exist = false)
+	private BigDecimal orderNumber;
+
+    public BigDecimal getOrderNumber() {
+		return orderNumber;
+	}
+
+	public void setOrderNumber(BigDecimal orderNumber) {
+		this.orderNumber = orderNumber;
+	}
+
+	public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getWarehousId() {
+        return warehousId;
+    }
+
+    public void setWarehousId(String warehousId) {
+        this.warehousId = warehousId;
+    }
+
+    public String getPolId() {
+        return polId;
+    }
+
+    public void setPolId(String polId) {
+        this.polId = polId;
+    }
+
+    public String getMtrKindCode() {
+        return mtrKindCode;
+    }
+
+    public void setMtrKindCode(String mtrKindCode) {
+        this.mtrKindCode = mtrKindCode;
+    }
+
+    public String getMtrKindName() {
+        return mtrKindName;
+    }
+
+    public void setMtrKindName(String mtrKindName) {
+        this.mtrKindName = mtrKindName;
+    }
+
+    public String getMtrCode() {
+        return mtrCode;
+    }
+
+    public void setMtrCode(String mtrCode) {
+        this.mtrCode = mtrCode;
+    }
+
+    public String getMtrName() {
+        return mtrName;
+    }
+
+    public void setMtrName(String mtrName) {
+        this.mtrName = mtrName;
+    }
+
+    public String getSpecs() {
+        return specs;
+    }
+
+    public void setSpecs(String specs) {
+        this.specs = specs;
+    }
+
+    public String getMeasureCode() {
+        return measureCode;
+    }
+
+    public void setMeasureCode(String measureCode) {
+        this.measureCode = measureCode;
+    }
+
+    public String getMeasureName() {
+        return measureName;
+    }
+
+    public void setMeasureName(String measureName) {
+        this.measureName = measureName;
+    }
+
+    public BigDecimal getWarehousNumber() {
+        return warehousNumber;
+    }
+
+    public void setWarehousNumber(BigDecimal warehousNumber) {
+        this.warehousNumber = warehousNumber;
+    }
+
+    public Date getWarehousTime() {
+        return warehousTime;
+    }
+
+    public void setWarehousTime(Date warehousTime) {
+        this.warehousTime = warehousTime;
+    }
+
+    public BigDecimal getTaxRate() {
+        return taxRate;
+    }
+
+    public void setTaxRate(BigDecimal taxRate) {
+        this.taxRate = taxRate;
+    }
+
+    public BigDecimal getUnitPriceNtax() {
+		return unitPriceNtax;
+	}
+
+	public void setUnitPriceNtax(BigDecimal unitPriceNtax) {
+		this.unitPriceNtax = unitPriceNtax;
+	}
+
+	public BigDecimal getUnitPriceTax() {
+		return unitPriceTax;
+	}
+
+	public void setUnitPriceTax(BigDecimal unitPriceTax) {
+		this.unitPriceTax = unitPriceTax;
+	}
+
+	public BigDecimal getTotalMoneyNtax() {
+		return totalMoneyNtax;
+	}
+
+	public void setTotalMoneyNtax(BigDecimal totalMoneyNtax) {
+		this.totalMoneyNtax = totalMoneyNtax;
+	}
+
+	public BigDecimal getTotalMoneyTax() {
+		return totalMoneyTax;
+	}
+
+	public void setTotalMoneyTax(BigDecimal totalMoneyTax) {
+		this.totalMoneyTax = totalMoneyTax;
+	}
+
+	@Override
+    protected Serializable pkVal() {
+        return this.id;
+    }
+
+    @Override
+    public String toString() {
+        return "MatPurchaseStockInlist{" +
+        "id=" + id +
+        ", warehousId=" + warehousId +
+        ", polId=" + polId +
+        ", mtrKindCode=" + mtrKindCode +
+        ", mtrKindName=" + mtrKindName +
+        ", mtrCode=" + mtrCode +
+        ", mtrName=" + mtrName +
+        ", specs=" + specs +
+        ", measureCode=" + measureCode +
+        ", measureName=" + measureName +
+        ", warehousNumber=" + warehousNumber +
+        ", warehousTime=" + warehousTime +
+        ", taxRate=" + taxRate +
+        ", unitPriceNtax=" + unitPriceNtax +
+        ", unitPriceTax=" + unitPriceTax +
+        ", totalMoneyNtax=" + totalMoneyNtax +
+        ", totalMoneyTax=" + totalMoneyTax +
+        "}";
+    }
+}

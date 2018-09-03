@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.build.cloud.modules.mat.dao.MatPurchasePlanDao">
+		
+	<select id="selectPage" parameterType="java.util.Map" resultType="com.build.cloud.modules.mat.entity.MatPurchasePlanEntity">
+		SELECT
+			a.*,
+			c.company_name as mainConName,
+			d.company_name as companyName
+		FROM
+			mat_purchase_plan a
+		LEFT JOIN
+			bs_project b
+		ON
+			a.project_id = b.id
+		LEFT JOIN
+			sys_company c
+		ON
+		  c.id = b.generalcontractor_id 
+		LEFT JOIN 
+			sys_company d 
+		ON 
+			d.id = a.company_id 
+		WHERE a.valid="0"
+			<if test="purchaseType != null and purchaseType !=''">
+				and a.purchase_type=#{purchaseType}
+			</if>
+			<if test="planMonth != null and planMonth !=''">
+				and a.plan_month like #{planMonth}
+			</if>
+			<if test="projectId != null and projectId !=''">
+				and a.project_id=#{projectId}
+			</if> 
+			<if test="projectName != null and projectName !=''">
+				and a.project_name=#{projectName}
+			</if> 
+			<if test="projectId == null or projectId ==''">
+				and a.project_id in (select id from bs_project where company_id=#{companyId})
+			</if>  
+			<if test="checkStatus !=null and checkStatus!=''">
+				and a.check_status = '2' and a.return_status='0' 
+				and a.id in (select plan_id from mat_purchase_planlist mpp
+				where
+					mpp.used_state = '0'
+				or
+					mpp.used_number <![CDATA[ < ]]> mpp.plan_number
+				)
+			</if> 
+			order by create_time desc
+	</select>
+	<delete id="deleteById" parameterType="java.lang.String">
+		delete from mat_purchase_plan where id=#{id}
+	</delete>
+	
+	<!-- 用于汇总参照 -->
+	<select id="getPlanList" parameterType="java.util.Map" resultType="com.build.cloud.modules.mat.entity.MatPurchasePlanEntity">
+		SELECT
+			a.*,
+			c.company_name as mainConName,
+			d.company_name as companyName
+		FROM
+			mat_purchase_plan a
+		LEFT JOIN
+			bs_project b
+		ON
+			a.project_id = b.id
+		LEFT JOIN
+			sys_company c
+		ON
+		  c.id = b.generalcontractor_id 
+		LEFT JOIN 
+			sys_company d 
+		ON 
+			d.id = a.company_id 
+		WHERE 
+			a.valid = '0'
+			and a.purchase_type = '1'
+			and a.check_status = '2' 
+			and a.return_status = '0'
+			and a.id in (select plan_id from mat_purchase_planlist mpp
+				where
+					mpp.used_state = '0'
+			)
+			<if test="projectId != null and projectId != ''">
+				and a.project_id = #{projectId}
+			</if>
+		    <if test="planMonth != null and planMonth !=''">
+				and a.plan_month=#{planMonth}
+			</if>
+		<!-- 如果有公共项目，查出由分包单位创建的甲供采购计划 -->
+		<if test="proId != null and proId !=''">
+			union all
+			SELECT
+				a.*,
+				c.company_name as mainConName,
+				d.company_name as companyName
+			FROM
+				mat_purchase_plan a
+			LEFT JOIN
+				bs_project b
+			ON
+				a.project_id = b.id
+			LEFT JOIN
+				sys_company c
+			ON
+			  c.id = b.generalcontractor_id 
+			LEFT JOIN 
+				sys_company d 
+			ON 
+				d.id = a.company_id 
+			WHERE 
+				a.valid = '0'
+				and a.purchase_type = '1'
+				and a.check_status = '2' 
+				and a.return_status = '0'
+				and a.id in (select plan_id from mat_purchase_planlist mpp
+					where
+						mpp.used_state = '0'
+				)
+				
+				 and a.project_id in (
+			    	SELECT 
+						id 
+					FROM 
+						bs_project 
+					WHERE 
+						company_id IN (
+							SELECT
+								b.labor_id
+							FROM
+								op_public_project a
+							JOIN 
+								bs_project b 
+							ON 
+								a.id = b.pro_id
+							WHERE
+								a.valid='0'
+								and b.valid='0'
+								and a.id = #{proId}
+						) 
+						and valid='0'
+						AND pro_id = #{proId}
+			    )
+			    <if test="planMonth != null and planMonth !=''">
+					and a.plan_month=#{planMonth}
+				</if>
+		</if>
+		
+	</select>
+	
+	<select id="selectReferPage" parameterType="java.util.Map" resultType="com.build.cloud.modules.mat.entity.MatPurchasePlanEntity">
+		SELECT
+			a.*,
+			c.company_name as mainConName,
+			d.company_name as companyName
+		FROM
+			mat_purchase_plan a
+		LEFT JOIN
+			bs_project b
+		ON
+			a.project_id = b.id
+		LEFT JOIN
+			sys_company c
+		ON
+		  c.id = b.generalcontractor_id 
+		LEFT JOIN 
+			sys_company d 
+		ON 
+			d.id = a.company_id 
+		WHERE a.valid="0"
+			
+			<if test="purchaseType != null and purchaseType !=''">
+				and a.purchase_type=#{purchaseType}
+			</if>
+			<if test="planMonth != null and planMonth !=''">
+				and a.plan_month like concat(concat("%",#{planMonth}),"%") 
+			</if>
+			<if test="projectId != null and projectId !=''">
+				and a.project_id=#{projectId}	
+				and b.pro_id IN (SELECT pro_id FROM bs_project WHERE id = #{projectId})
+			</if> 
+			<if test="projectName != null and projectName !=''">
+				and a.project_name like concat(concat("%",#{projectName}),"%") 
+				or b.pro_id IN (SELECT pro_id FROM bs_project WHERE project_name = #{projectName})
+			</if> 
+		<!-- 	<if test="projectId == null or projectId ==''">
+				and a.project_id in (select id from bs_project where company_id=#{companyId})
+			</if> -->  
+			<if test="checkStatus !=null and checkStatus!=''">
+				and a.check_status = '2' and a.return_status='0' 
+				and a.id in (select plan_id from mat_purchase_planlist mpp
+				where
+					mpp.used_state = '0'
+				or
+					mpp.used_number <![CDATA[ < ]]> mpp.plan_number
+				)
+			</if> 
+			order by create_time desc
+	</select>
+	
+</mapper>

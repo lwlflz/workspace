@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.build.cloud.modules.productplan.dao.ProWorkOrderDao">
+	<select id="selectPageByFrom" parameterType="java.util.Map"
+		resultType="com.build.cloud.modules.productplan.form.ProWorkOrderForm">
+		select 
+			pwo.id,
+			pwo.proplan_unique,
+			pwo.consplit_id,
+			(select con_name from pro_contract where id = pwo.consplit_id) as contractName,
+			pwo.project_id,
+			(select project_name from bs_project where id = pwo.project_id) as projectName,
+			pwo.work_name,
+			pwo.work_content,
+			pwo.work_remarks,
+			pwo.plan_bengin_date,
+			pwo.plan_end_date,
+			pwo.duration,
+			pwo.initail_by,
+			(select name from bs_worker where id = pwo.initail_by) as initailName,
+			pwo.duty_by,
+			(select name from bs_worker where id = pwo.duty_by) as dutyName,
+			pwo.send_date,
+			pwo.act_begin_date,
+			pwo.act_end_date,
+			pwo.work_status,
+		<!-- 	pwo.group_by,
+			(select name from bs_worker where id = pwo.group_by) as groupName,
+			pwo.construct_by,
+			(select name from bs_worker where id = pwo.construct_by) as constructName,
+			pwo.quality_by,
+			(select name from bs_worker where id = pwo.quality_by) as qualityName,
+			pwo.service_by,
+			(select name from bs_worker where id = pwo.service_by) as serviceName,
+			pwo.contract_by,
+			(select name from bs_worker where id = pwo.contract_by) as contractName,
+			pwo.supervision_by,
+			(select name from bs_worker where id = pwo.supervision_by) as supervisionName, -->
+			pwo.acceptor_ids,
+			pwo.create_time,
+			pwo.create_by,
+			pwo.update_time,
+			pwo.update_by,			
+			pwo.valid
+		from pro_work_order pwo	
+			left join bs_worker bw on bw.id = pwo.duty_by 
+			left join bs_project c on c.id = pwo.project_id 
+		where 
+			pwo.valid = '0'
+		<if test="companyId!=null and companyId!=''">
+			AND c.company_id = #{companyId}
+		</if>
+		<if test="projectId!=null and projectId!=''">
+			AND pwo.project_id = #{projectId}
+		</if>
+		<if test="dutyName!=null and dutyName!=''">
+			AND bw.name like concat(concat("%",#{dutyName}),"%") 
+		</if>		
+	</select>
+</mapper>

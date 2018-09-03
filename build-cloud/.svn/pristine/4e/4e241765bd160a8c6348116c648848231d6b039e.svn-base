@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.build.cloud.modules.bs.dao.BsBussinessDao">
+	<sql id="bsArchive">	
+		a.bus_type_code  as   busTypeCode,
+		a.bussiness_code as   bussinessCode,
+		a.bussiness_name as   bussinessName,
+		a.tax_reg_numm   as   taxRegNumm,
+		a.legal_person   as   legalPerson,
+		a.contact        as   contact,
+		a.con_phone      as   conPhone,
+		a.bus_address    as   busAddress,
+		a.bus_lic_num    as   busLicNum,
+		a.web_url        as   webUrl,
+		a.email          as   email,
+		a.id             as   id,
+		a.status         as   status,
+		a.remark         as   remark,
+		a.create_by      as   createBy,
+		a.create_time    as   createTime,
+		a.update_by      as   updateBy,
+		a.update_time    as   updateTime,
+		a.valid          as  valid 
+
+	</sql>
+
+	<select id="selectPageByBusId" parameterType="java.util.Map"
+		resultType="com.build.cloud.modules.bs.entity.BsBussinessEntity">
+		SELECT
+			<include refid="bsArchive" />
+		FROM
+			bs_bussiness a		
+		WHERE
+			a.valid = '0'
+			AND a.company_id = #{companyId}
+		<if test="status != null and status != ''">
+			AND a.status=#{status}
+		</if>	
+		<if test="busTypeCode != null and busTypeCode != ''">
+			AND a.bus_type_code=#{busTypeCode}
+		</if>
+		<if test="bussinessName != null and bussinessName != '' ">
+			AND a.bussiness_name like concat(concat("%",#{bussinessName}),"%")
+		</if>
+		<if test="contact != null and contact != ''">
+			AND a.contact like concat(concat("%",#{contact}),"%")
+		</if>
+		<if test="conPhone != null and conPhone != ''">
+			AND a.con_phone like concat(concat("%",#{conPhone}),"%")
+		</if>
+		<if test="keywords != null and keywords != ''">
+			AND (a.bussiness_name like concat(concat("%",#{keywords}),"%")
+			 or a.contact like concat(concat("%",#{keywords}),"%")
+			 or a.con_phone like concat(concat("%",#{keywords}),"%"))
+		</if>
+		
+	</select>
+	<select id="partbJoin" parameterType="String" resultType="com.build.cloud.modules.bs.entity.BsBussinessEntity">
+		SELECT 
+			DISTINCT(c.id),
+			c.bussiness_name 
+		FROM 
+			(SELECT a.project_id ,b.* FROM ls_contract_labor a INNER JOIN bs_bussiness b ON a.partyb_id = b.id
+			WHERE a.project_id = #{projectId}) c 
+	</select>
+</mapper>

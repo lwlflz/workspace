@@ -1,0 +1,9 @@
+package com.liuwei.demo;
+
+public class ShiroTest {
+
+//	@Test
+	public void testHelloWorld() {
+		
+	}
+}

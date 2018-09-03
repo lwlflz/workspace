@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.build.cloud.modules.sys.dao.SysDeptDao">
+
+	<select id="queryDetpIdList" resultType="string">
+		select id from sys_dept
+		where parent_id = #{value} and status = 0
+	</select>
+
+		<!-- 根据公司Id查询部门信息 -->
+	<select id="getDeptTreeByCompanyId" parameterType="String" resultType="com.build.cloud.modules.sys.entity.SysDeptEntity">
+		SELECT
+			d.id AS id,
+			d.parent_id AS parentId,
+			d.dept_code AS deptCode,
+			d.parent_code AS parentCode,
+			d.company_id AS companyId,
+			c.company_name AS companyName,
+			d.dept_name as deptName,
+			d.order_num AS orderNum,
+			d.leader as leader,
+			d.phone as phone,
+			d.corp_code AS corpCode,
+			d.corp_name AS corpName,
+			d.create_by AS createBy,
+			d.create_time AS createTime,
+			d.update_by AS updateBy,
+			d.update_time AS updateTime,
+			d.valid as valid
+		FROM
+			sys_dept d
+		left join 
+		  	sys_company c
+		on 
+			d.company_id = c.id
+		WHERE
+			d.valid = '0'
+		and 
+		  	d.company_id = #{companyId}
+			
+	</select>
+
+	
+</mapper>

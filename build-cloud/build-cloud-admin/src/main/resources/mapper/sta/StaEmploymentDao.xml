@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.build.cloud.modules.sta.dao.StaEmploymentDao">
+	<select id="selectWorkerRecord" resultType="com.build.cloud.modules.sta.entity.StaEmploymentEntity">
+		SELECT
+			pwr.id,
+			pwr.project_id,
+			pwr.team_id,
+			pwr.record_time,
+			IFNULL(((
+				CAST(
+					SUM( ( pwr.work_hours * pwr.work_number / IFNULL( pwr.standard_work_hours, '8' ) ) ) AS DECIMAL ( 18, 1 ) 
+				) 
+				) + (
+				CAST(
+					SUM( ( pwr.overtime_hours * pwr.overtime_number / IFNULL( pwr.standard_overtime_hours, '6' ) ) ) AS DECIMAL ( 18, 1 ) 
+				) 
+			)), 0) AS workHours,
+			YEAR ( pwr.record_time ) AS staYear,
+			MONTH ( pwr.record_time ) AS staMonth,
+			DAY ( pwr.record_time ) AS staDay 
+		FROM
+			`pro_worker_record` AS pwr 
+		WHERE
+			YEAR ( pwr.record_time ) = YEAR ( NOW( ) ) 
+			AND MONTH ( pwr.record_time ) = MONTH ( NOW( ) ) 
+		GROUP BY
+			YEAR ( pwr.record_time ),
+			MONTH ( pwr.record_time ),
+			DAY ( pwr.record_time ),
+			pwr.project_id,
+			pwr.team_id
+	</select>
+	
+	<select id="selectStaEmployment" resultType="com.build.cloud.modules.sta.StaEmploymentBean">
+		SELECT
+			se.project_id,
+			se.team_id,
+			GROUP_CONCAT( se.work_hours ORDER BY se.sta_day ) AS work_hours,
+			se.sta_year,
+			se.sta_month,
+			GROUP_CONCAT( se.sta_day ORDER BY se.sta_day ) AS sta_day,
+			( 
+				SELECT 
+					SUM( se.work_hours ) 
+				FROM 
+					`sta_employment` AS se 
+				WHERE
+					se.sta_year = DATE_FORMAT( #{time}, '%Y' ) 
+					AND se.sta_month = DATE_FORMAT( #{time}, '%c' ) 
+					<if test="projectId != '' and projectId != null">
+						AND se.project_id = #{projectId}
+					</if>
+					<if test="teamId != '' and teamId != null">
+						AND se.team_id = #{teamId}
+					</if>
+					<if test="projectId == '' or projectId == null">
+						and se.project_id in (select id from bs_project where company_id=#{companyId})
+					</if>
+				GROUP BY 
+					se.sta_year, 
+					se.sta_month 
+			) AS totalWorkHours,
+			bt.team_name,
+			bt.team_type_name 
+		FROM
+			`sta_employment` AS se
+			LEFT JOIN bs_team AS bt ON se.team_id = bt.id 
+		WHERE
+			se.sta_year = DATE_FORMAT( #{time}, '%Y' ) 
+			AND se.sta_month = DATE_FORMAT( #{time}, '%c' ) 
+			<if test="projectId != '' and projectId != null">
+				AND se.project_id = #{projectId}
+			</if>
+			<if test="teamId != '' and teamId != null">
+				AND se.team_id = #{teamId}
+			</if>
+			<if test="projectId == '' or projectId == null">
+				and se.project_id in (select id from bs_project where company_id=#{companyId})
+			</if>
+		GROUP BY
+			se.project_id,
+			se.team_id
+	</select>
+	
+	<select id="selectByDay" resultType="java.util.Map">
+		SELECT
+			se.work_hours,
+			se.sta_year,
+			se.sta_month,
+			se.sta_day,
+			SUM( se.work_hours ) AS totalDaily
+		FROM
+			`sta_employment` AS se
+			LEFT JOIN bs_team AS bt ON se.team_id = bt.id 
+		WHERE
+			se.sta_year = DATE_FORMAT( #{time}, '%Y' ) 
+			AND se.sta_month = DATE_FORMAT( #{time}, '%c' ) 
+			<if test="projectId != '' and projectId != null">
+				AND se.project_id = #{projectId}
+			</if>
+			<if test="teamId != '' and teamId != null">
+				AND se.team_id = #{teamId}
+			</if>
+			<if test="projectId == '' or projectId == null">
+				and se.project_id in (select id from bs_project where company_id=#{companyId})
+			</if>
+		GROUP BY
+			se.sta_year,
+			se.sta_month,
+			se.sta_day
+	</select>
+</mapper>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.build.cloud.modules.mat.dao.MatPurchaseStockInlistDao">
+
+	<select id="selectListInfo" parameterType="java.lang.String" resultType="com.build.cloud.modules.mat.entity.MatPurchaseStockInlistEntity">
+		select 
+			a.*,
+			b.order_number as 'orderNumber'
+		from 
+			mat_purchase_stock_inlist a 
+		left join 
+			mat_purchase_orderlist b 
+		on 
+			a.pol_id=b.id
+		where 
+			a.warehous_id=#{id}	
+	</select>
+</mapper>

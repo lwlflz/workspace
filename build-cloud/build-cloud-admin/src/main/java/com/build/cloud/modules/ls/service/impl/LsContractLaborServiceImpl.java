@@ -1,0 +1,250 @@
+package com.build.cloud.modules.ls.service.impl;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import org.activiti.engine.runtime.ProcessInstance;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
+import com.baomidou.mybatisplus.mapper.EntityWrapper;
+import com.baomidou.mybatisplus.plugins.Page;
+import com.baomidou.mybatisplus.service.impl.ServiceImpl;
+import com.beust.jcommander.internal.Maps;
+import com.build.cloud.common.activity.pojo.TaskIdMapPojo;
+import com.build.cloud.common.activity.service.ActivityService;
+import com.build.cloud.common.constant.ActivityConstant;
+import com.build.cloud.common.constant.Constant;
+import com.build.cloud.common.utils.PageUtils;
+import com.build.cloud.common.utils.Query;
+import com.build.cloud.modules.common.service.ICommonService;
+import com.build.cloud.modules.ls.dao.LsContractLaborDao;
+import com.build.cloud.modules.ls.entity.LsContractLaborEntity;
+import com.build.cloud.modules.ls.entity.LsContractLaborPaymentEntity;
+import com.build.cloud.modules.ls.service.ILsContractLaborPaymentService;
+import com.build.cloud.modules.ls.service.ILsContractLaborService;
+import com.build.cloud.modules.sys.shiro.ShiroUtils;
+import com.google.common.base.Objects;
+
+import cn.hutool.core.util.StrUtil;
+@Service("lsContractLaborService")
+public class LsContractLaborServiceImpl extends ServiceImpl<LsContractLaborDao, LsContractLaborEntity> implements ILsContractLaborService{
+
+	@Autowired
+	private ILsContractLaborPaymentService contractLaborPaymentService;
+	
+	@Autowired
+	private ActivityService activityService;
+	
+	@Autowired
+	private ICommonService commonService;
+	
+	@Override
+	public PageUtils queryPage(Map<String, Object> params) {
+		Map<String, String> map = commonService.getCompanyProType(params.get("companyId").toString(), params.get("projectId").toString());
+		if("2".equals(map.get(Constant.COMPANY_ROLE_TYPE)) || "3".equals(map.get(Constant.COMPANY_ROLE_TYPE))) {
+			params.putAll(map);
+			String conName = (String)params.get("conName");
+			if(StrUtil.isNotBlank(conName) && conName.indexOf("%") != -1) {
+				params.put("conName", conName.replaceAll("%", "\\\\%"));
+			}
+			Query<Map<String, Object>> query = new Query<Map<String, Object>>(params);
+			Page<Map<String, Object>> page = query.getPage();
+			List<Map<String, Object>> records = baseMapper.findContractLabor(page, query);
+			page.setRecords(records);
+			return new PageUtils(page);
+		}
+		return new PageUtils(new Page<Map<String, Object>>());
+		
+//		String conName = (String)params.get("conName");
+//		if(StrUtil.isNotBlank(conName) && conName.indexOf("%") != -1) {
+//			params.put("conName", conName.replaceAll("%", "\\\\%"));
+//		}
+//		Query<Map<String, Object>> query = new Query<Map<String, Object>>(params);
+//		Page<Map<String, Object>> page = query.getPage();
+//		if("0".equals(params.get("conType"))) {
+//			List<Map<String, Object>> records = baseMapper.findContractLaborIncome(page,query);
+//			page.setRecords(records);
+//		}else {
+//			List<Map<String, Object>> records = baseMapper.findContractLaborSpending(page,query);
+//			page.setRecords(records);
+//		}
+//		return new PageUtils(page);
+	}
+	
+	@Override
+	public PageUtils queryPageAll(Map<String, Object> params) {
+		Query<Map<String, Object>> query = new Query<Map<String, Object>>(params);
+		Page<Map<String, Object>> page = query.getPage();
+		List<Map<String, Object>> records = baseMapper.getContractLaborAll(page,query);
+		Map<String, Object> map = Maps.newHashMap();
+		map.put("haveAppliedMoney", 600);
+		map.put("shouldClosedPay", 700);
+		map.put("closedPay", 800);
+		records.add(map);
+		page.setRecords(records);
+		return new PageUtils(page);
+	}
+
+	@Override
+	public LsContractLaborEntity getContractLaborById(String id) {
+		return baseMapper.getContractLaborById(id);
+	}
+
+	@Override
+	public void updateContractLabor(LsContractLaborEntity entity) {
+		baseMapper.updateAllColumnById(entity);
+		EntityWrapper<LsContractLaborPaymentEntity> wrapper = new EntityWrapper<LsContractLaborPaymentEntity>();
+		wrapper.eq("con_id", entity.getId());
+		contractLaborPaymentService.delete(wrapper);
+		if(entity != null && entity.getConPaymentList().size() > 0) {
+			List<LsContractLaborPaymentEntity> list = entity.getConPaymentList();
+			for (LsContractLaborPaymentEntity lsContractLaborPaymentEntity : list) {
+				lsContractLaborPaymentEntity.setConId(entity.getId());
+			}
+			contractLaborPaymentService.insertBatch(list);
+		}
+	}
+	
+	@Override
+	@Transactional(propagation = Propagation.REQUIRED)
+	public void submit(LsContractLaborEntity entity) {
+
+		LsContractLaborEntity info = baseMapper.selectById(entity.getId());
+		
+		//如果流程存在且未完成
+		if(!StringUtils.isEmpty(info.getActivityinsId())
+				&&Objects.equal(info.getCheckStatus(), "0")
+				&&Objects.equal(info.getReturnStatus(), "0")){
+			//完成节点
+			TaskIdMapPojo tmp = new TaskIdMapPojo();
+			tmp.setUserId(ShiroUtils.getUserId());
+			Map<String,Object> localMap = Maps.newHashMap();
+			localMap.put("oper", ActivityConstant.TaskOperType.ACT_TASKOPER_SUBMIT.value);
+    		tmp.setLocalMap(localMap);
+			activityService.completeTaskByInsId(info.getActivityinsId(),tmp);
+			
+			if(!StringUtils.isEmpty(info.getActivityinsId())){
+				LsContractLaborEntity upInfo = new LsContractLaborEntity();
+				upInfo.setId(entity.getId());
+				upInfo.setActivityinsId(info.getActivityinsId());
+				upInfo.setCheckStatus("1");//审核中
+				upInfo.setReturnStatus("0");//未弃审
+				baseMapper.updateById(upInfo);
+			}
+		}else if((StringUtils.isEmpty(info.getActivityinsId())||Objects.equal(info.getReturnStatus(), "1"))
+				&&Objects.equal(info.getCheckStatus(), "0")){//如果流程不存在或流程已弃审
+			TaskIdMapPojo tmp = new TaskIdMapPojo();
+			tmp.setInsKey(ActivityConstant.ProcessKey.ACT_DEF_CON_LABOR.value);//流程定义key
+			tmp.setUserId(ShiroUtils.getUserId());
+			
+			Map<String,Object> localMap = Maps.newHashMap();
+			localMap.put("oper", ActivityConstant.TaskOperType.ACT_TASKOPER_SUBMIT.value);
+			tmp.setLocalMap(localMap);
+			
+			Map<String,Object> map = Maps.newHashMap();
+			map.put(ActivityConstant.VariableKey.ACT_VAR_SUBMITER.value, ShiroUtils.getUserId());
+			map.put(ActivityConstant.VariableKey.ACT_VAR_BILLCODE.value, info.getId());
+			String conType  =(Integer.parseInt(info.getConType()) == 0) ? "income":"expend";
+			map.put(ActivityConstant.VariableKey.ACT_VAR_BILLTYPE.value, 
+					ActivityConstant.BillType.ACT_BILL_CON_LABOR.value + ":" + conType);
+			map.put(ActivityConstant.VariableKey.ACT_VAR_PROJECTNAME.value, info.getProjectName());
+			tmp.setMap(map);
+			String activityInsId = activityService.startAndComplete(tmp);
+			
+			if(!StringUtils.isEmpty(activityInsId)){
+				LsContractLaborEntity upInfo = new LsContractLaborEntity();
+				upInfo.setId(info.getId());
+				upInfo.setActivityinsId(activityInsId);
+				upInfo.setCheckStatus("1");//审核中
+				upInfo.setReturnStatus("0");//未弃审
+				baseMapper.updateById(upInfo);
+			}
+		}	
+	}
+
+
+	@Override
+	@Transactional(propagation = Propagation.REQUIRED)
+	public void check(LsContractLaborEntity entity) {
+		TaskIdMapPojo taskPojo = new TaskIdMapPojo();
+		taskPojo.setTaskId(entity.getTaskId());
+		taskPojo.setComment(entity.getComment());
+		taskPojo.setUserId(ShiroUtils.getUserId());
+		
+		Map<String,Object> localMap = Maps.newHashMap();
+		localMap.put("oper", ActivityConstant.TaskOperType.ACT_TASKOPER_PASS.value);
+		taskPojo.setLocalMap(localMap);
+		activityService.completeTaskByTaskIdAndMap(taskPojo);
+		
+		ProcessInstance pi = activityService.queryProcessInstance(entity.getActivityinsId());
+		//流程结束
+		if (pi == null) {  
+			//修改单据状态为审核通过
+			LsContractLaborEntity upInfo = new LsContractLaborEntity();
+			upInfo.setId(entity.getId());
+			upInfo.setCheckStatus("2");//审核通过
+//			upInfo.setEffStatus("1");//已生效
+			upInfo.setCheckFinTime(new Date());
+			baseMapper.updateById(upInfo);
+        }
+		
+	}
+
+
+	@Override
+	public void reject(LsContractLaborEntity entity) {
+		//工作流驳回
+		TaskIdMapPojo taskPojo = new TaskIdMapPojo();
+		taskPojo.setTaskId(entity.getTaskId());
+		taskPojo.setComment(entity.getComment());
+		taskPojo.setUserId(ShiroUtils.getUserId());
+		
+//				Map<String,Object> localMap = Maps.newHashMap();
+//				localMap.put("oper", ActivityConstant.TaskOperType.ACT_TASKOPER_REJECT.value);
+//				taskPojo.setLocalMap(localMap);
+		
+		boolean isReturnSubmit = activityService.backProcess(taskPojo);
+		if(isReturnSubmit){
+			//修改单据状态为自由态
+			LsContractLaborEntity upInfo = new LsContractLaborEntity();
+			upInfo.setId(entity.getId());
+			upInfo.setCheckStatus("0");//自由态
+			baseMapper.updateById(upInfo);
+		}
+	}
+
+
+	@Override
+	public void endReturn(LsContractLaborEntity entity) {
+		ProcessInstance ins = activityService.findProcessInstance(entity.getActivityinsId());
+		if(ins == null){//表示流程结束
+			//修改单据状态为自由态，已弃审
+			LsContractLaborEntity upInfo = new LsContractLaborEntity();
+			upInfo.setId(entity.getId());
+			upInfo.setCheckStatus("0");//自由态
+			upInfo.setReturnStatus("1");//已弃审
+			baseMapper.updateById(upInfo);
+		}
+		
+	}
+
+	@Override
+	public List<Map<String, Object>> getConLaborList(Map<String, Object> params) {
+		
+		return baseMapper.getContractLaborAll(params);
+	}
+
+	public static void main(String[] args) {
+		String name = "%";
+		if(name.indexOf("%") != -1) {
+			name = name.replaceAll("%", "\\\\%");
+			System.out.println("进行了转义");
+		}
+		System.out.println(name);
+	}
+}

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.build.cloud.modules.mat.dao.MatPurchaseStockOutDao">
+
+	<select id="queryPageList" parameterType="java.util.Map"
+		resultType="com.build.cloud.modules.mat.entity.MatPurchaseStockOutEntity">
+		select a.*,s.bussiness_name as subpackageName  from mat_purchase_stock_out a 
+		left join bs_bussiness s on s.id = a.subpackage_id
+		 where a.valid='0'
+		<if test="projectId != null and projectId !=''">
+			and a.project_id=#{projectId}
+		</if>
+		<if test="projectId == null or projectId ==''">
+			and a.project_id in (select id from bs_project where
+			company_id=#{companyId})
+		</if>
+		<if test="createTime != null and createTime !=''">
+			and DATE_FORMAT(a.create_timezF,'%Y%m')=DATE_FORMAT(#{createTime}, '%Y%m')
+		</if>
+		order by a.create_time desc
+	</select>
+
+	<select id="getInventory" parameterType="java.util.Map" resultType="int">
+		SELECT stock_number from mat_purchase_stock WHERE 1=1
+		<if test="mtrKindCode != null and mtrKindCode !=''">
+			and mtr_kind_code = #{mtrKindCode}
+		</if>
+		<if test="mtrCode != null and mtrCode !=''">
+			and mtr_code = #{mtrCode}
+		</if>
+		<if test="specs != null and specs !=''">
+			AND specs = #{specs}
+		</if>
+		<if test="projectId != null and projectId !=''">
+			AND project_id = #{projectId}
+		</if>
+	</select>
+
+	<select id ="queryStockPageList" parameterType="java.util.Map" resultType="com.build.cloud.modules.mat.entity.MatPurchaseStockEntity">
+		SELECT * from mat_purchase_stock WHERE 1=1
+		<if test="projectId != null and projectId !=''">
+			AND project_id = #{projectId}
+		</if>
+		<if test="keywords != null and keywords !=''">
+			AND mtr_name like  concat(concat("%",#{keywords}),"%")
+		</if>
+	</select>
+	
+	<!-- 查询出库单最小出库时间是否在盘存时间之前 -->
+	<select id="selectTakeTimes" parameterType="java.util.Map" resultType="java.lang.Integer">
+		SELECT
+			COUNT(*)
+		FROM
+			mat_take_inventory
+		WHERE
+			project_id = #{projectId}
+		AND DATE_FORMAT(take_date, '%Y%m%d') >= DATE_FORMAT(
+			(
+				SELECT
+					MIN(out_time) AS 'outTime'
+				FROM
+					mat_purchase_stock_outlist a
+				LEFT JOIN mat_purchase_stock_out b ON a.stock_id = b.id
+				WHERE
+					b.id = #{id}
+			),
+			'%Y%m%d'
+		)
+	</select>
+	
+	<!-- 劳务班组合同参照 -->
+	<select id="getConList" parameterType="java.util.Map" resultType="com.build.cloud.modules.productplan.dto.ProContract">
+	    select 
+	    	a.*,
+	    	b.name as dutyDname 
+	    from 
+	    	pro_contract a
+	    left join
+	    	bs_worker b
+	    on 
+	    	a.duty_id=b.id		
+	    where 
+	    	a.valid='0'
+	    	and a.return_status='0'
+	    	and a.check_status='2'
+	    	<if test="proId == null or proId == ''">
+	    		and a.project_id=#{projectId}
+	    	</if>
+	    	<if test="proId != null and proId != ''">
+		    	and a.project_id in (
+			    	SELECT 
+						id 
+					FROM 
+						bs_project 
+					WHERE 
+						company_id IN (
+							SELECT
+								b.labor_id
+							FROM
+								op_public_project a
+							JOIN 
+								bs_project b 
+							ON 
+								a.id = b.pro_id
+							WHERE
+								a.valid='0'
+								and b.valid='0'
+								and a.id = #{proId}
+						) 
+						and valid='0'
+						AND pro_id = #{proId}
+		    	)
+	    	</if>
+	    	<if test="keywords != null and keywords != ''">
+				AND (
+					b.name like concat(concat("%",#{keywords}),"%")
+					or a.con_name like concat(concat("%",#{keywords}),"%")
+				)
+			</if>
+	</select>
+	
+</mapper>

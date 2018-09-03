@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper
+	namespace="com.build.cloud.modules.sys.dao.SysUserTokenDao">
+
+	<select id="queryByToken"
+		resultType="com.build.cloud.modules.sys.entity.SysUserTokenEntity">
+		select token_id, user_id,token,expire_time,update_time from sys_user_token where token_type = '0' and token = #{value}
+	</select>
+</mapper>

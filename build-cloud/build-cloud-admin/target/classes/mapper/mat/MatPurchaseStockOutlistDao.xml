@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.build.cloud.modules.mat.dao.MatPurchaseStockOutlistDao">
+	<select id="selectListInfo" parameterType="java.lang.String" resultType="com.build.cloud.modules.mat.entity.MatPurchaseStockOutlistEntity">
+		SELECT
+		  	b.*, 
+		  	(SELECT stock_number FROM mat_purchase_stock WHERE project_id = a.project_id AND mtr_code = b.mtr_code) AS 'inventory'
+		FROM
+		  mat_purchase_stock_out a
+		LEFT JOIN 
+		  	mat_purchase_stock_outlist b 
+		ON 
+			a.id = b.stock_id
+		where a.id=#{id}	
+	</select>
+</mapper>

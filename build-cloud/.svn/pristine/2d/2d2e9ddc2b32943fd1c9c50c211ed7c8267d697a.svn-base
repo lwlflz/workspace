@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.build.cloud.modules.mat.dao.MatPurchasePlanlistDao">
+	<delete id="deleteByPlanId" parameterType="java.lang.String">
+		delete from mat_purchase_planlist where plan_id=#{plan_id}
+	</delete>	
+	<select id="selectByIds" parameterType="java.util.List" resultType="com.build.cloud.modules.mat.entity.MatPurchasePlanlistEntity">
+		select mpl.* from mat_purchase_planlist mpl
+		where mpl.id in
+		<foreach collection="list" item="id" open="(" close=")" separator="," index="">
+			#{id}
+		</foreach>
+		ORDER BY mpl.plan_number
+	</select>
+</mapper>

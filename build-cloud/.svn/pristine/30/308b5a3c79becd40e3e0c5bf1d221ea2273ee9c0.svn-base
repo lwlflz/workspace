@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.build.cloud.modules.punch.dao.PunchDao">
+
+	<select id="queryStatCard" resultType="com.build.cloud.modules.punch.entity.PunchEntity">
+		SELECT
+			sc.ng_id,
+			sc.ng_user_id,
+			sc.ng_dev_id,
+			sc.ts_card,
+			DATE(sc.ts_card) AS attendDate,
+			sc.st_card_type,
+			sc.sz_user_name,
+			sc.sz_employ_id,
+			sc.sz_dev_name,
+			sc.sz_dev_place
+			,dd.is_in
+			,bw.work_type
+			,bw.id AS workId
+			,dd.project_id
+		FROM
+			stat_card AS sc 
+			LEFT JOIN dev_device dd ON dd.sz_serial = sc.ng_dev_id
+			LEFT JOIN pro_rota pr ON pr.project_id = dd.project_id
+			LEFT JOIN pro_rota_worker prw ON prw.rota_id = pr.id 
+			LEFT JOIN bs_worker bw ON prw.worker_id = bw.id AND bw.dev_code = sc.ng_user_id
+		WHERE
+			to_days( sc.ts_card ) = to_days( now( ) ) 
+	</select>
+	<select id="queryPunch" parameterType="java.util.Map" resultType="com.build.cloud.modules.punch.bean.PunchBean">
+		SELECT
+			aa.workerId,
+			aa.attendDate,
+			GROUP_CONCAT( DISTINCT aa.entryTime ORDER BY aa.entryTime DESC ) AS entryTime,
+			GROUP_CONCAT( DISTINCT aa.exitTime ORDER BY aa.exitTime DESC ) AS exitTime,
+			aa.userName,
+			aa.szEmployId,
+			aa.projectName,
+			aa.typeCode,
+			aa.typeName,
+			aa.projectId
+		FROM
+			(
+			SELECT
+				DATE(sc.ts_card) AS attendDate,
+				( SELECT DATE_FORMAT( sc.ts_card, '%H:%i:%s' ) WHERE dd.is_in = '1' ) AS entryTime,
+				( SELECT DATE_FORMAT( sc.ts_card, '%H:%i:%s' ) WHERE dd.is_in = '2' ) AS exitTime,
+				dd.is_in,
+				sc.sz_user_name AS userName,
+				sc.sz_employ_id AS szEmployId,
+				bp.project_name AS projectName,
+				bw.id AS workerId,
+				bw.work_type AS typeCode,
+				bc.code_name AS typeName,
+				dd.project_id AS projectId
+			FROM
+				stat_card AS sc 
+				LEFT JOIN dev_device dd ON dd.sz_serial = sc.ng_dev_id
+				LEFT JOIN bs_project bp ON dd.project_id = bp.id
+				LEFT JOIN pro_rota pr ON pr.project_id = dd.project_id
+				LEFT JOIN pro_rota_worker prw ON prw.rota_id = pr.id 
+				LEFT JOIN bs_worker bw ON prw.worker_id = bw.id AND bw.dev_code = sc.ng_user_id
+				LEFT JOIN bs_code bc ON bc.code_num = bw.work_type 
+			WHERE
+				bc.code_type = 'work_kind' 
+				<if test="timeNode != null">
+<!-- 					AND DATE(sc.ts_card) > #{timeNode} -->
+					and date_format(sc.ts_card, '%Y-%m-%d %H:%i:%s') > DATE_SUB(date(#{timeNode}),INTERVAL 1 DAY)
+				</if>
+				<if test="projectId != null">
+					AND pr.project_id = #{projectId} 
+				</if>
+			) aa 
+		GROUP BY
+			aa.workerId,
+			DATE(aa.attendDate)
+		ORDER BY
+			aa.attendDate ASC
+	</select>
+	
+	<select id="queryEntryTime" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT
+			MIN(date_format(sc.ts_card, '%Y-%m-%d %H:%i:%s'))AS entryTime
+		FROM
+			stat_card AS sc
+			LEFT JOIN dev_device dd ON dd.sz_serial = sc.ng_dev_id
+			LEFT JOIN bs_project bp ON dd.project_id = bp.id
+			LEFT JOIN pro_rota pr ON pr.project_id = dd.project_id
+			LEFT JOIN pro_rota_worker prw ON prw.rota_id = pr.id 
+			LEFT JOIN bs_worker bw ON prw.worker_id = bw.id AND bw.dev_code = sc.ng_user_id 
+		WHERE
+			dd.is_in = 1
+			AND bw.id = #{workerId}
+			AND DATE(sc.ts_card) = DATE(#{attendDate})
+			<if test="projectId != null">
+				AND pr.project_id = #{projectId} 
+			</if>
+		
+	</select>
+	<select id="queryExitTimes" parameterType="java.util.Map" resultType="string">
+		SELECT
+			GROUP_CONCAT( DISTINCT(DATE_FORMAT( sc.ts_card, '%H:%i:%s' ))ORDER BY ts_card DESC ) AS exitTime
+		FROM
+			stat_card AS sc
+			LEFT JOIN dev_device dd ON dd.sz_serial = sc.ng_dev_id
+			LEFT JOIN bs_project bp ON dd.project_id = bp.id
+			LEFT JOIN pro_rota pr ON pr.project_id = dd.project_id
+			LEFT JOIN pro_rota_worker prw ON prw.rota_id = pr.id 
+			LEFT JOIN bs_worker bw ON prw.worker_id = bw.id AND bw.dev_code = sc.ng_user_id 
+		WHERE
+			dd.is_in = 2 
+			AND bw.id = #{workerId}
+			<choose>
+		        <when test="enTime != null and enTime != ''">
+		            AND sc.ts_card BETWEEN DATE_FORMAT(#{attendDate}, '%Y-%m-%d %H:%i:%s') AND  #{enTime}
+		        </when>
+		        <otherwise>
+		            AND DATE(sc.ts_card) = DATE(#{attendDate})
+		        </otherwise>
+	    	</choose>
+			<if test="projectId != null">
+				AND pr.project_id = #{projectId} 
+			</if>
+		
+	</select>
+</mapper>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.build.cloud.modules.punch.dao.DevDeviceDao">
+
+	<select id="queryDevEmp" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT
+			pau.sz_name AS szName,
+			de.sz_employ_id AS ngId,
+			CASE
+				dd.is_in 
+				WHEN '1' THEN
+				'进场考勤机' ELSE '退场考勤机' 
+			END AS devType 
+		FROM
+			dev_device AS dd
+			INNER JOIN dev_employee de ON dd.ng_id = de.ng_dev_id
+			LEFT JOIN pro_attend_user pau ON pau.sz_employ_id = de.sz_employ_id
+		<if test=" name != null and name != ''">
+			WHERE pau.sz_name LIKE CONCAT('%', #{name}, '%') OR de.sz_employ_id = #{name}
+		</if>
+	</select>
+	
+	<select id="selectAllProject" resultType="string">
+		select DISTINCT project_id as projectId FROM dev_device
+	</select>
+</mapper>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.build.cloud.modules.productplan.dao.ProRotaMapper">
+
+	<!-- 通用查询映射结果 -->
+	<resultMap id="BaseResultMap" type="com.build.cloud.modules.productplan.dto.ProRota">
+		<id column="id" property="id" />
+		<result column="contract_id" property="contractId" />
+		<result column="project_id" property="projectId" />
+		<result column="team_id" property="teamId" />
+		<result column="rota_staus" property="rotaStaus" />
+		<result column="duty_by" property="dutyBy" />
+		<result column="teamer" property="teamer" />
+		<result column="create_time" property="createTime" />
+		<result column="create_by" property="createBy" />
+		<result column="update_time" property="updateTime" />
+		<result column="update_by" property="updateBy" />
+		<result column="valid" property="valid" />
+		<result column="team_name" property="teamName" />
+		<result column="con_name" property="conName" />
+		<result column="leader_name" property="leaderName" />
+		<result column="duty_dname" property="dutyDname" />
+		<result column="team_type" property="teamType" />
+		<result column="work_count" property="workCount" />
+	</resultMap>
+	
+	<select id="selectRotaPage" resultMap="BaseResultMap" parameterType="com.build.cloud.modules.productplan.dto.ProRota">
+		SELECT 
+			t.id,
+			t.contract_id,
+			t.project_id,
+			t.team_id,
+			t.rota_staus,
+			t.duty_by,
+			t.teamer,
+			t.create_time,
+			t.create_by,
+			t.update_time,
+			t.update_by,
+			t.valid,
+			a.team_name,
+			a.team_type,
+			b.con_name,
+			c.name AS leader_name,
+			d.name AS duty_dname,
+			e.work_count  
+		FROM pro_rota t 
+		LEFT JOIN bs_team a on t.team_id = a.id 
+		LEFT JOIN pro_contract b on t.contract_id = b.id 
+		LEFT JOIN bs_worker c on c.id = t.teamer 
+		LEFT JOIN bs_worker d on d.id = t.duty_by 
+		LEFT JOIN 
+			(SELECT a.rota_id,COUNT(*) AS work_count FROM pro_rota_worker a GROUP BY a.rota_id) e 
+			ON e.rota_id = t.id 
+		WHERE t.valid = '0' 
+		<if test="projectId !=null and projectId != ''">
+			AND t.project_id = #{projectId}
+		</if>
+	</select>
+
+</mapper>

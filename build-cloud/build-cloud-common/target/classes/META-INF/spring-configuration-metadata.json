@@ -1,0 +1,73 @@
+{
+  "hints": [],
+  "groups": [
+    {
+      "sourceType": "com.build.cloud.common.config.FastDFSConfig",
+      "name": "fastdfs",
+      "sourceMethod": "public com.sunsine.fastdfs.FastDFSTemplateFactory fastDFSFactory() ",
+      "type": "com.sunsine.fastdfs.FastDFSTemplateFactory"
+    }
+  ],
+  "properties": [
+    {
+      "sourceType": "com.sunsine.fastdfs.FastDFSTemplateFactory",
+      "name": "fastdfs.g-anti-steal-token",
+      "type": "java.lang.Boolean"
+    },
+    {
+      "sourceType": "com.sunsine.fastdfs.FastDFSTemplateFactory",
+      "name": "fastdfs.g-charset",
+      "type": "java.lang.String"
+    },
+    {
+      "sourceType": "com.sunsine.fastdfs.FastDFSTemplateFactory",
+      "name": "fastdfs.g-connect-timeout",
+      "type": "java.lang.Integer"
+    },
+    {
+      "sourceType": "com.sunsine.fastdfs.FastDFSTemplateFactory",
+      "name": "fastdfs.g-network-timeout",
+      "type": "java.lang.Integer"
+    },
+    {
+      "sourceType": "com.sunsine.fastdfs.FastDFSTemplateFactory",
+      "name": "fastdfs.g-secret-key",
+      "type": "java.lang.String"
+    },
+    {
+      "sourceType": "com.sunsine.fastdfs.FastDFSTemplateFactory",
+      "name": "fastdfs.g-tracker-group",
+      "type": "org.csource.fastdfs.TrackerGroup"
+    },
+    {
+      "sourceType": "com.sunsine.fastdfs.FastDFSTemplateFactory",
+      "name": "fastdfs.g-tracker-http-port",
+      "type": "java.lang.Integer"
+    },
+    {
+      "sourceType": "com.sunsine.fastdfs.FastDFSTemplateFactory",
+      "name": "fastdfs.nginx-address",
+      "type": "java.util.List<java.lang.String>"
+    },
+    {
+      "sourceType": "com.sunsine.fastdfs.FastDFSTemplateFactory",
+      "name": "fastdfs.pool-config",
+      "type": "com.sunsine.fastdfs.pool.PoolConfig"
+    },
+    {
+      "sourceType": "com.sunsine.fastdfs.FastDFSTemplateFactory",
+      "name": "fastdfs.protocol",
+      "type": "java.lang.String"
+    },
+    {
+      "sourceType": "com.sunsine.fastdfs.FastDFSTemplateFactory",
+      "name": "fastdfs.sepapator",
+      "type": "java.lang.String"
+    },
+    {
+      "sourceType": "com.sunsine.fastdfs.FastDFSTemplateFactory",
+      "name": "fastdfs.tracker-servers",
+      "type": "java.util.List<java.lang.String>"
+    }
+  ]
+}

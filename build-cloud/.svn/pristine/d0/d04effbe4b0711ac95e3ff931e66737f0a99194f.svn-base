@@ -1,0 +1,54 @@
+package com.build.cloud.modules.productplan.controller;
+
+import java.util.List;
+
+import org.activiti.engine.TaskService;
+import org.activiti.engine.task.Task;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.build.cloud.core.base.controller.AbstractController;
+import com.build.cloud.core.base.controller.Result;
+import com.build.cloud.modules.productplan.dto.HomePage;
+import com.build.cloud.modules.sys.shiro.ShiroUtils;
+
+/**
+ * <p>
+ *   前端控制器
+ * </p>
+ * @author liangsen
+ * @since 2018-04-23
+ */
+@Controller
+@RequestMapping("/pp/homePage")
+public class HomePageController extends AbstractController{
+    @Autowired  
+    private TaskService taskService; 
+    
+    /**
+	 * 获取劳务班组合同所有类型
+	 */
+	@GetMapping("/v1/info")
+	@ResponseBody
+	public Result info() {
+		try{
+			HomePage homePage = new HomePage();
+			//获取任务服务对象  
+	        List<Task> tasks = taskService.createTaskQuery()  
+	                                    .taskInvolvedUser(ShiroUtils.getUserId())//通过接受人来查询个人任务  
+	                                    .list();  
+	        if(tasks!=null){
+	        	homePage.setCheckCount(tasks.size());
+	        }
+	        
+	        return Result.ok().put(homePage);
+		}catch(Exception e){
+			logger.error("首页查询异常", e);
+   			return Result.error("首页查询异常："+e.getMessage());
+		}
+	}
+    
+}

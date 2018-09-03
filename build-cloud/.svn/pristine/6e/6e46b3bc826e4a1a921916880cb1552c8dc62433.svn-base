@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.build.cloud.modules.sys.dao.SysEmployeeDao">
+	
+	<select id="selectPageByVo" parameterType="java.util.Map"
+		resultType="com.build.cloud.modules.sys.entity.vo.EmployeeVo">
+		SELECT
+			e.id as id,
+			e.user_id as userId,
+			e.dept_id as deptId,
+			e.dept_name as deptName,
+			e.company_id as companyId,
+			e.company_name as companyName,
+			e.emp_name as empName,
+			e.emp_name_en as empNameEn,
+			e.remark as remark,
+			e.corp_code as corpCode,
+			e.corp_name as corpName,			
+			e.archive_mark as archiveMark,
+			e.entry_date as entryDate,
+			e.id_num as idNum,
+			e.contact_info as contactInfo,
+			e.live_address as liveAddress,
+			e.sex	as sex,
+			e.birthday	as birthday,
+			e.emergency_contact	as emergencyContact,
+			e.emp_type_id	as empTypeId,
+			t.emp_type_name	as empTypeName,
+			e.age as age,
+			e.`status`,
+			u.departure_date AS departureDate,
+			u.login_name AS loginName,
+			u.`password`,
+			u.email	as email,
+			u.user_type as userType
+		FROM  sys_employee e
+		LEFT JOIN sys_user u ON e.user_id = u.id
+		left join sys_employee_type t on e.emp_type_id = t.id
+		WHERE
+		u.valid = '0'
+		AND e.valid = '0'
+		AND e.corp_code = #{corpCode}
+		AND e.company_id = #{companyId}
+		<if test="status != null and status != ''">
+			AND e.status = #{status}
+		</if>
+		<if test="contactInfo!=null and contactInfo != '' ">
+			AND e.contact_info like concat(concat("%",#{contactInfo}),"%")
+		</if>
+		<if test="empName != null and empName != ''">
+			AND e.emp_name like concat(concat("%",#{empName}),"%")
+		</if>
+		<if test="deptId != null and deptId != ''">
+			AND e.dept_id=#{deptId}
+		</if>
+		<if test="companyId != null and companyId != ''">
+			AND e.company_id=#{companyId}
+		</if>
+		<if test="empTypeId != null and empTypeId != ''">
+			AND e.emp_type_id=#{empTypeId}
+		</if>
+		<if test="idNum != null and idNum != ''">
+			AND e.id_num like concat(concat("%",#{idNum}),"%")
+		</if>
+		order by e.create_time desc
+	</select>
+</mapper>

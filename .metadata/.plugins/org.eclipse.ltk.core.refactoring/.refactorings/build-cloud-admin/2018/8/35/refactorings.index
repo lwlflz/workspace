@@ -1,0 +1,6 @@
+1535333854158	Delete element
+1535592410989	Extract local variable 'companyByName'
+1535609795633	Extract local variable 'selectById'
+1535610065269	Extract local variable 'update'
+1535612850106	Extract local variable 'insert'
+1535619259131	Extract local variable 'selectById'

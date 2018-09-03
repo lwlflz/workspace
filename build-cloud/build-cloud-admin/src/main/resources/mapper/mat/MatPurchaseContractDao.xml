@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.build.cloud.modules.mat.dao.MatPurchaseContractDao">
+	
+	<select id="selectPage" parameterType="java.util.Map" resultType="java.util.Map">
+		select 
+			pc.project_name as 'projectName',
+			pc.con_name as 'conName',
+			pc.temporary_total AS 'temporartTotal',
+		    pc.con_money_tax AS 'conMoneyTax',
+		    bb.bussiness_name as 'bussinessName', 
+			pc.id,
+			f.totalStockNumber,
+			f.totalMoney,
+	        0 AS 'totalApplied', 
+		    0 AS 'totalPayment', 
+		    0 AS 'totalNotPayment',
+		    bu.bussiness_name as 'partyaName',
+		    bus.bussiness_name as 'partybName',
+		    pc.con_code as 'conCode',
+		    pc.partya_id as 'partyaId',
+		    pc.partyb_id as 'partybId'
+		from 
+			mat_purchase_contract pc 
+		left join 
+			(
+				select 
+					a.id,
+					SUM(d.warehous_number) AS 'totalStockNumber',
+		  			SUM(d.total_money_tax) AS 'totalMoney'
+    			from 
+    				mat_purchase_contract a 
+    			left join 
+    				mat_purchase_order b on a.id=b.con_id 
+    			left join 
+    				mat_purchase_stock_in c on b.id=c.order_id 
+    			left join 
+    				mat_purchase_stock_inlist d on c.id=d.warehous_id   
+				where 
+					a.valid='0' 
+					and b.valid='0' 
+					and c.valid='0'
+					and c.check_status='2'
+					and c.return_status='0'  
+				GROUP BY a.project_id, b.con_id, b.order_type
+			) f 
+		on 
+			pc.id=f.id	
+		left join 
+			bs_bussiness bb
+		on 
+			pc.partyb_id=bb.id
+		left join 
+			bs_bussiness bu
+		on 
+			pc.partya_id=bu.id
+		left join
+			bs_bussiness bus
+		on
+			pc.partyb_id=bus.id 				
+		where	
+			pc.valid='0'
+			<if test="projectId != null and projectId != ''">
+				and pc.project_id=#{projectId}
+			</if>
+			<if test="conName != null and conName !=''">
+				and pc.con_name like concat(concat("%",#{conName}),"%")
+			</if>
+			<if test="partybName != null and partybName !=''">
+				and  bus.bussiness_name like concat(concat("%",#{partybName}),"%")
+			</if>
+			<if test="conType != null and conType !=''">
+				and pc.con_type=#{conType}
+			</if>
+			<if test="projectId == null or projectId ==''">
+				and pc.project_id in (select id from bs_project where company_id=#{companyId})
+			</if>
+			<if test="checkStatus != null and checkStatus !=''">
+				and pc.check_status='2' and return_status='0'
+			</if>     
+			order by pc.sign_date desc
+	</select>
+	
+	<select id="selectByKey" parameterType="java.lang.String" resultType="com.build.cloud.modules.mat.entity.MatPurchaseContractEntity">
+		select 
+			a.*,
+			b.bussiness_name as partya_name,
+			c.bussiness_name as partyb_name 
+		from 
+			mat_purchase_contract a 
+		left join 
+			bs_bussiness b 
+		on 
+			a.partya_id=b.id 
+		left join 
+			bs_bussiness c
+		on 
+			a.partyb_id=c.id 
+		where 
+			a.valid='0' 
+			and a.id=#{id}
+	</select>
+	
+	<select id="happenedPuList" parameterType="java.util.Map" resultType="java.util.Map">
+		select 
+			c.mtr_kind_code as mtrKindCode,
+			c.mtr_kind_name as mtrKindName,
+			c.mtr_code as mtrCode,
+			c.mtr_name as mtrName,
+			c.specs as specs,
+			c.measure_code as measureCode,
+			c.measure_name as measureName,
+			sum(warehous_number) as amount 
+		from 
+			mat_purchase_stock_in a 
+		left join 
+			mat_purchase_order b 
+		ON 
+			a.order_id=b.id 
+		left join 
+			mat_purchase_stock_inlist c 
+		on 
+			a.id=c.warehous_id
+		where 
+			a.valid='0' 
+			and a.check_status='2' 
+			and a.return_status='0'
+			<if test="conId != null and conId !=''">
+				and b.con_id=#{conId}
+			</if>
+		group by mtr_code 
+	</select>
+	
+	<select id="selectIndexPage" parameterType="java.util.Map" resultType="java.util.Map">
+		select 
+			pc.project_name as 'projectName',
+			pc.con_name as 'conName',
+			bb.bussiness_name as bussinessName,
+			pc.id,
+			f.times,
+			f.totalNumber,
+			f.havMoney,
+			f.totalMoney,
+			f.orderType,
+	        0 AS 'totalApplied', 
+		    0 AS 'totalPayment', 
+		    0 AS 'totalNotPayment'
+		from 
+			mat_purchase_contract pc 
+		left join 
+			(
+				select 
+					a.id,
+					count(*) as 'times',
+					sum(d.warehous_number) as totalNumber,
+					CONVERT(SUM(d.total_money_tax) / SUM(d.warehous_number),decimal(18,2)) AS 'havMoney',
+	 				SUM(d.total_money_tax) AS 'totalMoney' ,
+   					CASE WHEN b.order_type = '1' THEN '甲供' ELSE '自购' END AS 'orderType'
+    			from 
+    				mat_purchase_contract a 
+    			left join 
+    				mat_purchase_order b on a.id=b.con_id 
+    			left join 
+    				mat_purchase_stock_in c on b.id=c.order_id 
+    			left join 
+    				mat_purchase_stock_inlist d on c.id=d.warehous_id   
+				where 
+					a.valid='0' 
+					and b.valid='0' 
+					and c.valid='0'
+					and c.check_status='2'
+					and c.return_status='0' 
+				GROUP BY a.project_id, b.con_id, b.order_type
+			) f  
+		on 
+			pc.id=f.id
+		left join 
+			bs_bussiness bb
+		on 
+			pc.partyb_id=bb.id
+		where
+			pc.valid='0'		
+			<if test="projectId != null and projectId != ''">
+				and pc.project_id=#{projectId}
+			</if>
+			<if test="projectId == null or projectId ==''">
+				and pc.project_id in (select id from bs_project where company_id=#{companyId})
+			</if>  
+			order by pc.sign_date desc  
+		
+	</select>
+
+</mapper>

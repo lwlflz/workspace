@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.build.cloud.modules.mat.dao.MatPurchaseStockDao">
+<select id="selectPage" parameterType="java.util.Map" resultType="com.build.cloud.modules.mat.entity.MatPurchaseStockEntity">
+		SELECT
+			mps.*, IFNULL(a.warehousNumber,0) AS warehousNumber,
+			IFNULL(b.outNumber,0) AS outNumber
+		FROM
+			mat_purchase_stock mps
+		LEFT JOIN (
+			SELECT
+				mpsil.mtr_code AS mtrCode,
+				SUM(mpsil.warehous_number) AS warehousNumber
+			FROM
+				mat_purchase_stock_inlist mpsil
+			WHERE
+				mpsil.warehous_id IN (
+					SELECT
+						mpsi.id
+					FROM
+						mat_purchase_stock_in mpsi
+					WHERE
+						mpsi.return_status = '0'
+					AND mpsi.check_status = '2'
+					AND mpsi.valid = '0'
+					<if test="projectId !=null and projectId !=''">
+						AND mpsi.project_id = #{projectId}
+					</if>
+					<if test="projectId == null or projectId ==''">
+						and mpsi.project_id in (select id from bs_project where company_id=#{companyId})
+					</if> 
+				) 
+				<if test="startDate != null and startDate !='' ">
+				AND mpsil.warehous_time <![CDATA[ >= ]]> #{startDate}
+				</if>
+				<if test="endDate != null and endDate!=''" >
+				AND mpsil.warehous_time <![CDATA[ <= ]]> #{endDate}
+				</if>
+			GROUP BY
+				mtrCode
+		) a ON a.mtrCode = mps.mtr_code
+		LEFT JOIN (
+			SELECT
+				mpsol.mtr_code AS mtrCode,
+				SUM(mpsol.out_number) AS outNumber
+			FROM
+				mat_purchase_stock_outlist mpsol
+			WHERE
+				mpsol.stock_id IN (
+					SELECT
+						mpso.id
+					FROM
+						mat_purchase_stock_out mpso
+					WHERE
+						mpso.return_status = '0'
+					AND mpso.check_status = '2'
+					AND mpso.valid = '0'
+					<if test="projectId !=null and projectId !=''">
+						AND mpso.project_id = #{projectId}
+					</if>
+					<if test="projectId == null or projectId ==''">
+						and mpso.project_id in (select id from bs_project where company_id=#{companyId})
+					</if> 
+				)
+				<if test="startDate != null and startDate !='' ">
+				AND mpsol.out_time <![CDATA[ >= ]]> #{startDate}
+				</if>
+				<if test="endDate != null and endDate!=''" >
+				AND mpsol.out_time <![CDATA[ <= ]]> #{endDate}
+				</if>
+			GROUP BY
+				mtrCode
+		) b ON b.mtrCode = mps.mtr_code
+		WHERE 1 = 1
+			AND (warehousNumber  <![CDATA[ <> ]]> 0.00 OR outNumber  <![CDATA[ <> ]]>0.00)
+			<if test="mtrName!=null and mtrName!=''">
+				AND mps.mtr_name = #{mtrName}
+			</if>
+			<if test="mtrKindName!=null and mtrKindName!=''">
+				AND mps.mtr_kind_name = #{mtrKindName}
+			</if>
+			<if test="projectId != null and projectId!=''">
+				AND mps.project_id = #{projectId}
+			</if>
+			<if test="projectId == null or projectId ==''">
+				and mps.project_id in (select id from bs_project where company_id=#{companyId})
+			</if> 
+</select>
+
+</mapper>

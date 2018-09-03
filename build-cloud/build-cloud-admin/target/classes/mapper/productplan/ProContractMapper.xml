@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="com.build.cloud.modules.productplan.dao.ProContractMapper">
+
+	<!-- 通用查询映射结果 -->
+	<resultMap id="BaseResultMap"
+		type="com.build.cloud.modules.productplan.dto.ProContract">
+		<id column="id" property="id" />
+		<result column="project_id" property="projectId" />
+		<result column="project_name" property="projectName" />
+		<result column="con_code" property="conCode" />
+		<result column="con_name" property="conName" />
+		<result column="con_type" property="conType" />
+		<result column="parta" property="parta" />
+		<result column="partb" property="partb" />
+		<result column="project_address" property="projectAddress" />
+		<result column="duty_identity" property="dutyIdentity" />
+		<result column="duty_id" property="dutyId" />
+		<result column="project_type" property="projectType" />
+		<result column="sign_date" property="signDate" />
+		<result column="con_money_ntax" property="conMoneyNtax" />
+		<result column="con_money_tax" property="conMoneyTax" />
+		<result column="price_type" property="priceType" />
+		<result column="begin_date" property="beginDate" />
+		<result column="end_date" property="endDate" />
+		<result column="floor_area" property="floorArea" />
+		<result column="warranty_rate" property="warrantyRate" />
+		<result column="contract_way" property="contractWay" />
+		<result column="project_quality" property="projectQuality" />
+		<result column="con_range" property="conRange" />
+		<result column="tax_rate" property="taxRate" />
+		<result column="unit_price" property="unitPrice" />
+		<result column="split_status" property="splitStatus" />
+		<result column="activityins_id" property="activityinsId" />
+		<result column="check_fin_time" property="checkFinTime" />
+		<result column="check_status" property="checkStatus" />
+		<result column="create_time" property="createTime" />
+		<result column="create_by" property="createBy" />
+		<result column="update_time" property="updateTime" />
+		<result column="update_by" property="updateBy" />
+		<result column="valid" property="valid" />
+	</resultMap>
+
+	<select id="selectConList"
+		parameterType="com.build.cloud.modules.productplan.dto.ProContract"
+		resultMap="BaseResultMap">
+		SELECT
+		t.id,
+		t.project_id,
+		t.project_name,
+		t.con_code,
+		t.con_name,
+		t.con_type,
+		t.parta,
+		c.bussiness_name as partbName,
+		t.project_address,
+		t.duty_identity,
+		t.duty_id,
+		t.project_type,
+		t.sign_date,
+		t.con_money_ntax,
+		t.con_money_tax,
+		t.price_type,
+		t.begin_date,
+		t.end_date,
+		t.floor_area,
+		t.warranty_rate,
+		t.contract_way,
+		t.project_quality,
+		t.con_range,
+		t.tax_rate,
+		t.unit_price,
+		t.split_status,
+		t.activityins_id,
+		t.check_fin_time,
+		t.check_status,
+		t.create_time,
+		t.create_by,
+		t.update_time,
+		t.update_by,
+		t.valid,
+		a.name AS duty_dname
+		FROM pro_contract t
+		LEFT JOIN bs_worker a ON a.id = t.duty_id
+		LEFT JOIN
+		bs_project b ON b.id = t.project_id
+		left join bs_bussiness c on t.partb
+		= c.id
+		WHERE t.valid = '0'
+		<if test="companyId!=null and companyId!=''">
+			AND b.company_id = #{companyId}
+		</if>
+		<if test="projectId!=null and projectId!=''">
+			AND t.project_id = #{projectId}
+		</if>
+		<if test="conType != null and conType != ''">
+			AND t.con_type = #{conType}
+		</if>
+		<if test="conName!=null and conName != ''">
+			AND t.con_name like concat(concat("%",#{conName}),"%")
+		</if>
+		<if test="partb!=null and partb != ''">
+			AND c.bussiness_name like concat(concat("%",#{partb}),"%")
+		</if>
+		<if test="keywords!=null and keywords != ''">
+			AND t.con_name like concat(concat("%",#{keywords}),"%")
+			or
+			a.name like concat(concat("%",#{keywords}),"%")
+		</if>
+	</select>
+
+
+	<select id="getWorkOrderInfoByCon"
+		resultType="com.build.cloud.modules.productplan.dto.ProContract">
+
+		select a.consplit_id as id,sum(k.quantities*b.total_price) as
+		finishValue,sum(k.quantities ) as finishproNum
+
+		from pro_work_order a
+		left join pro_contract_plandetail b on
+		a.proplan_unique =
+		b.proplan_unique
+		left join pro_plan_detail k on
+		a.proplan_unique =
+		k.unique_id
+		left join pro_plan_info l on k.pro_id =
+		l.id
+
+		where
+		a.work_status = '5' and a.valid = '0'
+		and l.check_status = 2 and
+		l.eff_status = 1
+		and b.valid = '0' and k.valid = '0' and l.valid = '0'
+
+		and a.consplit_id in
+
+		<foreach collection="list" index="index" item="item" open="("
+			separator="," close=")">
+			#{item}
+		</foreach>
+		group by a.consplit_id
+
+	</select>
+
+
+	<select id="getWorkRecordDaysByCon"
+		resultType="com.build.cloud.modules.productplan.dto.ProContract">
+
+		select a.id,sum(a.finishproNum)+sum(a.finishValue) as recordDays from
+		(
+		select
+		b.contract_id as id
+		,case when standard_work_hours=null then 0
+		else
+		work_number*a.work_hours/standard_work_hours end as finishproNum
+		,case when standard_overtime_hours=null then 0 else
+		overtime_number*overtime_hours/standard_overtime_hours end as
+		finishValue
+
+		from pro_worker_record a
+		left join pro_rota b on a.team_id =
+		b.team_id
+
+		where a.valid = 0
+		and b.contract_id in
+		<foreach collection="list" index="index" item="item" open="("
+			separator="," close=")">
+			#{item}
+		</foreach>
+		) a
+
+		GROUP BY a.id
+
+	</select>
+
+
+	<select id="getItemValueByPro" resultType="java.util.HashMap">
+
+		select kk.project_id
+		as projectId
+		,ifnull(sum(kk.quantities),0)/10000 as finishValue
+		,ifnull(sum(kk.record_num),0) as workRecord
+		,ifnull(sum(kk.quantities)/sum(kk.record_num),0) as dayValue
+		,ifnull(sum(kk.workorder_num),0) as workorderNum
+		,ifnull((sum(kk.not_do) + sum(kk.has_do))/sum(kk.record_num),0) as
+		modifyRate
+		,ifnull(sum(kk.has_do)/sum(kk.record_num),0) as finishRate
+
+		from (
+
+		select a.project_id,b.total_price * c.quantities as
+		quantities,null as
+		record_num,null as workorder_num,null as not_do
+		,null as has_do
+		from pro_work_order a
+		left join pro_contract_plandetail
+		b on a.proplan_unique = b.proplan_unique
+		left join pro_plan_detail c on
+		a.proplan_unique = c.unique_id
+
+		where a.work_status = '5' and a.valid =
+		'0' and b.valid = '0' and
+		a.project_id = #{projectId}
+
+		union all
+
+		select
+		a.project_id,null as quantities,sum(a.price)+sum(a.finishValue) as
+		record_num,null as workorder_num,null as not_do ,null as has_do
+		from (
+		select
+		project_id
+		,case when standard_work_hours=null then 0 else
+		work_number*work_hours/standard_work_hours end as price
+		,case when
+		standard_overtime_hours=null then 0 else
+		overtime_number*overtime_hours/standard_overtime_hours end as
+		finishValue
+
+		from pro_worker_record
+		where valid = 0
+		and project_id =
+		#{projectId}
+
+		) a
+		GROUP BY a.project_id
+
+		union all
+
+		select a.project_id,null
+		as quantities,null as record_num,COUNT(id) as
+		workorder_num,null as
+		not_do ,null as has_do
+		from pro_work_order a
+		where a.valid = '0' and
+		a.work_status = 5
+		and a.project_id = #{projectId}
+		group by a.project_id
+
+		union all
+
+		select wo.project_id,null as quantities,null as
+		record_num,null as
+		workorder_num,count(1) as not_do ,null as has_do
+		from bs_rectification r
+		left join pro_work_order wo on wo.id =
+		r.task_id
+		where r.valid = '0' and r.deal_status = '0'
+		and wo.project_id
+		= #{projectId}
+		group by wo.project_id
+
+		union ALL
+
+		select wo.project_id,null
+		as quantities,null as record_num,null as
+		workorder_num,null as not_do
+		,count(1) as has_do
+		from bs_rectification r
+		left join pro_work_order wo
+		on wo.id = r.task_id
+		where r.valid = '0' and r.deal_status = '1'
+		and
+		wo.project_id = #{projectId}
+		group by wo.project_id
+
+		) kk
+		group by
+		kk.project_id
+
+	</select>
+	
+	<!-- 劳务班组合同的所有整改 -->
+	<select id="findBsRectification" parameterType="java.util.Map" resultType="com.build.cloud.modules.bs.entity.BsRectificationEntity">
+		SELECT
+			r.*,wo.work_status as workStatus
+		FROM
+			bs_rectification r
+		INNER JOIN pro_work_order wo on wo.id = r.task_id and wo.valid='0'
+		WHERE
+			r.valid = '0'
+		AND task_id IN (
+			SELECT
+				pwo.id
+			FROM
+				pro_work_order pwo
+			INNER JOIN pro_contract_plandetail pcp ON pcp.proplan_unique = pwo.proplan_unique
+			AND pcp.valid = '0'
+			INNER JOIN pro_contract pc ON pcp.con_id = pc.id
+			<if test="conType!=null and conType != ''">
+			AND pc.con_type = #{conType}  
+		</if>
+			AND pc.valid = '0'
+			AND pc.split_status = '1'
+			AND pc.return_status = '0'
+			AND pc.check_status = '2'
+			AND pc.id = #{projectId}
+			where pwo.valid='0'
+		)  order by r.deal_status
+		
+	</select>
+	
+	<!-- 得到 已完成产值、总计工、已完成任务单数量 -->
+	<select id="getItemValue" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT
+			(<include refid="getFinishValue"/>) as finishValue,
+			(<include refid="getWorkRecord"/>) as  workRecord,
+			(<include refid="getWorkorderNum"/>) as workorderNum
+		FROM DUAL
+	</select>
+	
+	
+	<!-- 已完成产值 -->
+	<sql id="getFinishValue">
+		SELECT ifnull(pcp.total_price * ppd.quantities / 10000,0)  FROM pro_work_order pwo
+		INNER JOIN pro_contract_plandetail pcp ON pcp.proplan_unique = pwo.proplan_unique AND pcp.valid='0'
+		INNER JOIN pro_plan_detail ppd ON pwo.proplan_unique = ppd.unique_id
+					AND pcp.valid = '0'
+					INNER JOIN pro_contract pc ON pcp.con_id = pc.id
+					<if test="conType!=null and conType != ''">
+					AND pc.con_type = #{conType}  
+					</if>
+					AND pc.valid = '0'
+					AND pc.split_status = '1'
+					AND pc.return_status = '0'
+					AND pc.check_status = '2'
+					AND pc.id = #{projectId}
+		WHERE pwo.work_status = 5
+	</sql>
+	<!-- 总计工 -->
+	<sql id ="getWorkRecord">
+	SELECT ifnull(sum(a.price)+sum(a.finishValue),0) as workRecord from
+			(SELECT
+				CASE
+			WHEN pwr.standard_work_hours = NULL THEN
+				0
+			ELSE
+				pwr.work_number * pwr.work_hours / pwr.standard_work_hours
+			END AS price,
+			 CASE
+			WHEN pwr.standard_overtime_hours = NULL THEN
+				0
+			ELSE
+				pwr.overtime_number * pwr.overtime_hours / pwr.standard_overtime_hours
+			END AS finishValue
+			FROM
+				pro_worker_record pwr
+			INNER JOIN pro_rota pr ON pr.team_id = pwr.team_id
+			AND pr.valid = '0'
+			INNER JOIN pro_contract pc ON pc.id = pr.contract_id
+			AND pr.project_id = pc.project_id
+			<if test="conType!=null and conType != ''">
+			AND pc.con_type = #{conType}  
+			</if>
+			AND pc.valid = '0'
+			AND pc.split_status = '1'
+			AND pc.return_status = '0'
+			AND pc.check_status = '2'
+			AND pc.id = #{projectId}
+			WHERE
+				pwr.valid = '0') a
+	</sql>
+	<!-- 已完成任务单数量 -->
+	<sql id="getWorkorderNum">
+	SELECT ifnull(COUNT(pwo.id),0) from pro_work_order pwo  
+		INNER JOIN pro_contract_plandetail pcp ON pcp.proplan_unique = pwo.proplan_unique AND pcp.valid ='0'
+		INNER JOIN pro_contract pc ON pcp.con_id = pc.id 
+		<if test="conType!=null and conType != ''">
+			AND pc.con_type = #{conType}  
+		</if>
+		AND pc.valid='0' AND pc.split_status='1' 
+		AND pc.return_status='0' AND pc.check_status='2' AND pc.id=#{projectId}
+		WHERE pwo.work_status = 5
+	</sql>
+</mapper>

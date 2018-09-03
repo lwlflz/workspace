@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.build.cloud.modules.productplan.dao.ProContractPlandetailMapper">
+
+	<!-- 通用查询映射结果 -->
+	<resultMap id="BaseResultMap" type="com.build.cloud.modules.productplan.dto.ProContractPlandetail">
+		<id column="id" property="id" />
+		<result column="con_id" property="conId" />
+		<result column="proplan_unique" property="proplanUnique" />
+		<result column="project_id" property="projectId" />
+		<result column="unit_price" property="unitPrice" />
+		<result column="total_price" property="totalPrice" />
+		<result column="gross" property="gross" />
+		<result column="square" property="square" />
+		<result column="pay_node" property="payNode" />
+		
+		<result column="wbs_name" property="wbsName" />
+		<result column="name_property" property="nameProperty" />
+		<result column="plan_begin_date" property="planBeginDate" />
+		<result column="plan_end_date" property="planEndDate" />
+		<result column="duration" property="duration" />
+		<result column="quantities" property="quantities" />
+		<result column="unit" property="unit" />
+		<result column="parent_id" property="parentId" />
+	</resultMap>
+	
+	<delete id="physicsDelete">
+		delete FROM pro_contract_plandetail 
+		<where>
+			con_id = #{conId} 
+		</where>
+	</delete>
+
+	<select id="selectConDetail" parameterType="com.build.cloud.modules.productplan.dto.ProContractPlandetail" 
+	resultMap="BaseResultMap">
+		SELECT 
+			t.id,
+			t.con_id,
+			t.proplan_unique,
+			t.project_id,
+			t.unit_price,
+			t.total_price,
+			t.gross,
+			t.square,
+			t.pay_node,
+			b.wbs_name,
+			b.name_property,
+			b.plan_begin_date,
+			b.plan_end_date,
+			b.duration,
+			b.quantities,
+			b.unit,
+			b.parent_id 
+		FROM pro_contract_plandetail t 
+		LEFT JOIN pro_plan_info a ON a.project_id = t.project_id AND a.eff_status = '1' 
+		LEFT JOIN pro_plan_detail b ON b.pro_id = a.id AND b.unique_id = t.proplan_unique AND b.valid = '0' 
+		WHERE t.valid = '0' 
+		<if test="proplanUnique!=null and proplanUnique!=''">
+			AND t.proplan_unique = #{proplanUnique} 
+		</if>
+		<if test="projectId!=null and projectId!=''">
+			AND t.project_id = #{projectId} 
+		</if>
+		<if test="conId!=null and conId!=''">
+			AND t.con_id = #{conId} 
+		</if>
+		ORDER BY b.idx ASC
+	</select>
+</mapper>

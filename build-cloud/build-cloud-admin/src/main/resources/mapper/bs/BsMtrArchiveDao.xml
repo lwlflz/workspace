@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.build.cloud.modules.bs.dao.BsMtrArchiveDao">
+
+	<sql id="mtrArchive">
+	
+		a.id AS id,
+		a.mtr_kind_id AS mtrKindId,
+		a.mtr_code AS mtrCode,
+		a.mtr_name AS mtrName,
+		a.specs,
+		a.status,
+		a.create_by AS createBy,
+		a.create_time AS createTime,
+		a.update_by AS updateBy,
+		a.update_time AS updateTime,
+		a.valid,
+		b.mtr_kind_name AS mtrKindName,
+		c.measure_name AS measureName,
+		c.measure_code AS measureCode
+	</sql>
+
+	<select id="selectPageByKindId" parameterType="java.util.Map"
+		resultType="com.build.cloud.modules.bs.entity.BsMtrArchiveEntity">
+		SELECT
+			<include refid="mtrArchive" />
+		FROM
+			bs_mtr_archive a
+		LEFT JOIN
+			bs_mtr_kind_archive b
+		ON
+			a.mtr_kind_id = b.id
+		LEFT JOIN
+			bs_measure_unit c
+		ON
+			a.measure_unit = c.id
+		WHERE
+			a.valid = '0'
+		and
+			b.valid = '0'
+		AND
+			c.valid = '0'	
+		<if test="id != null and id != ''">
+			AND a.id=#{id}
+		</if>
+		<if test="mtrName != null and mtrName != '' ">
+			AND a.mtr_name like concat(concat("%",#{mtrName}),"%")
+		</if>
+		<if test="mtrCode != null and mtrCode != ''">
+			AND a.mtr_code=#{mtrCode}
+		</if>
+		<if test="mtrKindId != null and mtrKindId != ''">
+			AND a.mtr_kind_id=#{mtrKindId}
+		</if>
+		<if test="specs != null and specs != ''">
+			AND a.specs=#{specs}
+		</if>
+		<if test="measureUnit != null and measureUnit != ''">
+			AND a.measure_unit=#{measureUnit}
+		</if>
+		<if test="mtrKindName != null and mtrKindName != ''">
+			AND b.mtr_kind_name like concat(concat("%",#{mtrKindName}),"%")
+		</if>
+		
+	</select>
+
+</mapper>

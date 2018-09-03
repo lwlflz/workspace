@@ -1,0 +1,271 @@
+package com.build.cloud.modules.productplan.controller;
+
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.build.cloud.common.utils.PageUtils;
+import com.build.cloud.core.base.controller.AbstractController;
+import com.build.cloud.core.base.controller.Result;
+import com.build.cloud.modules.productplan.dao.ProRotaMapper;
+import com.build.cloud.modules.productplan.dto.ProRota;
+import com.build.cloud.modules.productplan.dto.ProRotaWorker;
+import com.build.cloud.modules.productplan.service.IProRotaService;
+import com.build.cloud.modules.productplan.service.IProRotaWorkerService;
+import com.google.common.collect.Maps;
+
+import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.StrUtil;
+
+/**
+ * <p>
+ *   前端控制器
+ * </p>
+ * @author liangsen
+ * @since 2018-05-03
+ */
+@Controller
+@RequestMapping("/pp/proRota")
+public class ProRotaController extends AbstractController {
+    
+    @Autowired 
+    private IProRotaService proRotaService;
+    
+    @Autowired
+    private IProRotaWorkerService proRotaWorkerService;
+    
+    @Autowired
+    private ProRotaMapper proRotaMapper;
+    
+    /**
+     * 保存花名册和人员
+     * @param info
+     * @return
+     */
+    @PostMapping("/v1/save")
+   	@ResponseBody
+   	public Result insert(@RequestBody ProRota info) {
+   		try {
+   			String id = proRotaService.insertProRota(info);
+   			Map<String,String> resMap = Maps.newHashMap();
+   			resMap.put("rotaId", id);
+   			return Result.ok().put(resMap);
+   		} catch (Exception e) {
+   			logger.error("保存失败", e);
+   			if(e.getMessage().contains("pro_con_index")){
+   				return Result.error("保存失败,当前项目与合同不能重复添加花名册");
+   			}else if(e.getMessage().contains("pro_team_index")){
+   				return Result.error("保存失败,当前项目与班组不能重复添加花名册");
+   			}
+   			return Result.error("保存失败："+e.getMessage());
+   		}
+   	}
+    
+    /**
+     * 删除项目花名册
+     * 
+     * 改成物理删除
+     * @return
+     */
+    @PostMapping("/v1/delete")
+	@ResponseBody
+    public Result delete(@RequestBody String id){
+    	try {
+    		String key = getDelId(id);
+    		proRotaMapper.deleteByIdPhysic(key);
+//        	proRotaService.deleteRota(key);
+        	return Result.ok("删除成功");
+		} catch (Exception e) {
+			logger.error("删除项目花名册失败", e);
+			return Result.error(e.getMessage());
+		}
+    }
+    
+    /**
+     * 删除花名册人员(单个删除)
+     * @param info
+     * @return
+     */
+    @PostMapping("/v1/deleteWorker")
+   	@ResponseBody
+   	public Result deleteWorker(@RequestBody ProRotaWorker worker) {
+   		try {
+   			proRotaService.deleteAsId(worker);
+   			return Result.ok("删除人员成功");
+   		} catch (Exception e) {
+   			logger.error("删除人员失败", e);
+   			return Result.error("删除人员失败："+e.getMessage());
+   		}
+   	}
+    
+    /**
+     * 进场
+     * @param worker
+     * @return
+     */
+    @PostMapping("/v1/inField")
+    @ResponseBody
+    public Result inField(@RequestBody ProRotaWorker worker){
+    	try {
+    		proRotaService.inField(worker);
+    		return Result.ok("进场成功");
+		} catch (Exception e) {
+			logger.error("进场失败", e);
+			return Result.error("进场失败");
+		}
+    }
+    
+    /**
+     * 退场
+     * @param worker
+     * @return
+     */
+    @PostMapping("/v1/outField")
+    @ResponseBody
+    public Result outField(@RequestBody ProRotaWorker worker){
+    	try {
+    		proRotaService.outField(worker);
+    		return Result.ok("退场成功");
+		} catch (Exception e) {
+			logger.error("退场失败", e);
+			return Result.error("退场失败");
+		}
+    }
+    
+    /**
+     * 批量新增花名册人员
+     * @param list
+     * @return
+     */
+//    @PostMapping("/v1/insertWorker")
+//   	@ResponseBody
+//   	public Result insertWorker(@RequestBody List<ProRotaWorker> list) {
+//   		try {
+//   			proRotaWorkerService.insertBatch(list);
+//   			return Result.ok("新增人员成功");
+//   		} catch (Exception e) {
+//   			logger.error("新增人员失败", e);
+//   			return Result.error("新增人员失败："+e.getMessage());
+//   		}
+//   	}
+    
+    /**
+     * 批量新增花名册人员
+     * @param list
+     * @return
+     */
+    @PostMapping("/v1/insertWorker")
+   	@ResponseBody
+   	public Result insertWorker(@RequestBody ProRotaWorker param) {
+   		try {
+   			String rotaId = param.getRotaId();
+   			String workerIds = param.getWorkerIds();
+   			String projectId = param.getProjectId();
+//   			String szEmpId = param.getNgId();
+   			
+   			if(StringUtils.isEmpty(rotaId)||StringUtils.isEmpty(workerIds)
+   					||StringUtils.isEmpty(projectId)){
+   				return Result.error("项目id、花名册id和员工ids不能为空");
+   			}
+   			
+//   			List<ProRotaWorker> list = Lists.newArrayList();
+//   			String[] ids = workerIds.split(",");
+//   			for (String id : ids) {
+//   				ProRotaWorker worker = new ProRotaWorker();
+//   				worker.setRotaId(rotaId);
+//   				worker.setWorkerId(id);
+//   				worker.setNgId(szEmpId);
+//   				list.add(worker);
+//			}
+//   			proRotaWorkerService.insertBatch(list);
+   			
+   			proRotaService.insertWorkers(param);
+   			return Result.ok("新增人员成功");
+   		} catch (Exception e) {
+   			logger.error("新增人员失败", e);
+   			if(e.getMessage().contains("rota_worker_inx")){
+   				return Result.error("花名册人员重复："+e.getMessage());
+   			}
+   			return Result.error("新增人员失败："+e.getMessage());
+   		}
+   	}
+    
+    /**
+     * 查询花名册
+     * @param info
+     * @return
+     */
+    @GetMapping("/v1/list")
+   	@ResponseBody
+   	public Result selectProRota(@RequestParam Map<String, Object> params) {
+   		try {
+   			if(StringUtils.isEmpty(MapUtil.getStr(params, "projectId"))){
+   				return Result.error("项目ID不能为空");
+   			}
+   			
+   			PageUtils page = proRotaService.queryPage(params);
+   			return Result.ok().put(page);
+   		} catch (Exception e) {
+   			logger.error("查询异常", e);
+   			return Result.error("查询异常："+e.getMessage());
+   		}
+   	}
+    
+    /**
+     * 查询花名册人员
+     * @param info
+     * @return
+     */
+    @GetMapping("/v1/selectWorker")
+   	@ResponseBody
+   	public Result selectWorker(@RequestParam Map<String, Object> params) {
+   		try {
+   			if(StringUtils.isEmpty(MapUtil.getStr(params, "rotaId"))){
+   				return Result.error("花名册ID不能为空");
+   			}
+   			
+   			List<ProRotaWorker> list = proRotaWorkerService.selectWorkersInfo(params);
+   			Map<String,List<ProRotaWorker>> map = Maps.newHashMap();
+   			map.put("list", list);
+   			return Result.ok().put(map);
+   		} catch (Exception e) {
+   			logger.error("查询异常", e);
+   			return Result.error("查询异常："+e.getMessage());
+   		}
+   	}
+    
+    @PostMapping("/v1/updateByNg")
+   	@ResponseBody
+    public Result updateByNg(@RequestBody Map<String, Object> params) {
+    	try {
+    		String id = MapUtil.getStr(params, "id");
+    		if (StrUtil.isEmpty(id)) {
+    			return Result.error("工人ID不能为空");
+			}
+    		ProRotaWorker proRotaWorker = proRotaWorkerService.selectById(id);
+    		if (proRotaWorker == null) {
+    			return Result.error("工人信息为空");
+			}
+    		String ngId = MapUtil.getStr(params, "ngId");
+    		if (StrUtil.isEmpty(ngId)) {
+    			return Result.error("考勤机编号不能为空");
+			}
+    		proRotaWorker.setNgId(ngId);
+    		proRotaWorkerService.updateById(proRotaWorker);
+   			return Result.ok("工人与考勤机关联成功");
+   		} catch (Exception e) {
+   			logger.error("关联异常", e);
+   			return Result.error("关联异常："+e.getMessage());
+   		}
+    }
+    
+}

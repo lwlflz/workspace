@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.build.cloud.modules.mat.dao.MatPurchaseOrderlistDao">
+	<delete id="deleteByOrderId" parameterType="java.lang.String">
+		delete from
+		mat_purchase_orderlist where order_id=#{plan_id}
+	</delete>
+	<select id="selectByList" parameterType="java.util.Map"
+		resultType="com.build.cloud.modules.mat.entity.MatPurchaseOrderlistEntity">
+		SELECT
+			mpo.*,
+			f.sum_warehous_number AS warehousNumber
+		FROM
+			mat_purchase_orderlist mpo
+		LEFT JOIN (SELECT mpo.pol_id,sum(mpo.warehous_number) as
+			sum_warehous_number from mat_purchase_stock_inlist mpo
+		LEFT JOIN 
+			mat_purchase_stock_in	mpsi
+		ON
+			mpsi.id = mpo.warehous_id
+		WHERE 
+			mpsi.valid = '0'
+		AND
+			mpo.pol_id in (SELECT id FROM mat_purchase_orderlist WHERE order_id =#{orderId})
+		AND
+			mpsi.return_status = '0' 
+		AND
+			mpsi.check_status = '2'
+		group by 
+			pol_id) f 
+		on 
+			mpo.id=f.pol_id
+		WHERE mpo.order_id = #{orderId}
+	</select>
+	<select id="selectSumUsedNumber" resultType="java.math.BigDecimal" parameterType="java.util.Map">
+		<if test="orderType != null and orderType ==2">
+			select sum(used_number) AS sumUsedNumber from mat_purchase_planlist where
+			id = #{id}
+			
+		</if>
+		<if test="orderType != null and orderType ==1">
+			select sum(used_number) AS sumUsedNumber from mat_purchase_plan_sumlist where
+			id = #{id}
+		</if>
+	</select>
+</mapper>

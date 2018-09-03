@@ -1,0 +1,383 @@
+package com.build.cloud.modules.ls.entity;
+
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.List;
+
+import javax.validation.constraints.Pattern;
+
+import com.baomidou.mybatisplus.annotations.TableField;
+import com.baomidou.mybatisplus.annotations.TableName;
+import com.build.cloud.core.entity.DataEntity;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+@TableName("ls_contract_labor")
+public class LsContractLaborEntity extends DataEntity{
+	private static final long serialVersionUID = 1L;
+	
+	/**
+	 * 项目ID
+	 */
+	private String projectId;
+	/**
+	 * 项目名称
+	 */
+	private String projectName;
+	/**
+	 * 合同名称
+	 */
+	private String conName;
+	/**
+	 * 合同编码
+	 */
+	private String conCode;
+	/**
+	 * 合同类型（0 收入合同  1支出合同）
+	 */
+	private String conType;
+	/**
+	 * 合同甲方
+	 */
+	private String partyaId;
+	/**
+	 * 合同甲方名称
+	 */
+	@TableField(exist = false)
+	private String partyaName;
+	/**
+	 * 合同乙方
+	 */
+	private String partybId;
+  	/**
+  	 * 合同乙方名称
+  	 */
+	@TableField(exist = false)
+	private String partybName;
+  	/**
+  	 * 乙方项目经理
+  	 */
+	private String partybLeader;
+  	/**
+  	 * 乙方项目经理身份证
+  	 */
+
+	private String partybLeaderIdcard;
+  	/**
+  	 * 乙方项目经理手机号
+  	 */
+
+	private String partybLeaderPhone;
+  	/**
+  	 * 工程地址
+  	 */
+	private String address;
+  	/**
+  	 * 签订日期
+  	 */
+	@JsonFormat(pattern="yyyy-MM-dd",timezone="GMT+8")
+	private Date signDate;
+  	/**
+  	 * 合同暂定建筑面积 
+  	 */
+	private BigDecimal temporaryTotal;
+  	/**
+  	 * 单价（元）
+  	 */
+	private BigDecimal unitMoney;
+  	/**
+  	 * 税率%
+  	 */
+	private BigDecimal taxRate;
+  	/**
+  	 * 合同金额（无税）
+  	 */
+	private BigDecimal conMoneyNtax;
+  	/**
+  	 * 合同金额（含税）
+  	 */
+	private BigDecimal conMoneyTax;
+  	/**
+  	 * 工程开始日期
+  	 */
+	@JsonFormat(pattern="yyyy-MM-dd",timezone="GMT+8")
+	private Date startDate;
+  	/**
+  	 * 工程结束日期
+  	 */
+	@JsonFormat(pattern="yyyy-MM-dd",timezone="GMT+8")
+	private Date endDate;
+  	/**
+  	 * 保修金比例（%）
+  	 */
+	private BigDecimal premiumRatio;
+  	/**
+  	 * 合同范围
+  	 */
+	private String conRange;
+  	/**
+  	 * 工作流实例ID
+  	 */
+	private String activityinsId;
+  	/**
+  	 * 弃审状态（0-未弃审 1-已弃审）
+  	 */
+	private String returnStatus;
+	/**
+  	 * 合同价款类型
+  	 */
+	private String conPriceType;
+  	/**
+  	 * 工作流完成时间
+  	 */
+	@JsonFormat(pattern="yyyy-MM-dd HH:mm:ss",timezone="GMT+8")
+	private Date checkFinTime;
+  	/**
+  	 * 状态（0-自由态 1-审核中 2-审核通过）
+  	 */
+	private String checkStatus;
+	/**
+	 * 付款协议集合
+	 */
+	@TableField(exist = false)
+	private List<LsContractLaborPaymentEntity> conPaymentList;
+	
+	/**
+	 * activity taskId
+	 */
+	@TableField(exist = false)
+	private String taskId;
+	/**
+	 * 是否最后审核人(弃审判断依据)
+	 */
+	@TableField(exist = false)
+	private boolean endCheckerFlag = false;
+	/**
+	 * 当前审核人列表
+	 */
+	@TableField(exist = false)
+	private List<String> nowCheckerList;
+	/**
+	 * activity 审核批注
+	 */
+	@TableField(exist = false)
+	private String comment;
+	/**
+	 * 项目编码
+	 */
+	@TableField(exist = false)
+	private String projectCode;
+	
+	public String getProjectCode() {
+		return projectCode;
+	}
+	public void setProjectCode(String projectCode) {
+		this.projectCode = projectCode;
+	}
+	public String getProjectId() {
+		return projectId;
+	}
+	public void setProjectId(String projectId) {
+		this.projectId = projectId;
+	}
+	public String getProjectName() {
+		return projectName;
+	}
+	public void setProjectName(String projectName) {
+		this.projectName = projectName;
+	}
+	public String getConName() {
+		return conName;
+	}
+	public void setConName(String conName) {
+		this.conName = conName;
+	}
+	public String getConCode() {
+		return conCode;
+	}
+	public void setConCode(String conCode) {
+		this.conCode = conCode;
+	}
+	public String getConType() {
+		return conType;
+	}
+	public void setConType(String conType) {
+		this.conType = conType;
+	}
+	public String getPartyaId() {
+		return partyaId;
+	}
+	public void setPartyaId(String partyaId) {
+		this.partyaId = partyaId;
+	}
+	public String getPartyaName() {
+		return partyaName;
+	}
+	public void setPartyaName(String partyaName) {
+		this.partyaName = partyaName;
+	}
+	public String getPartybId() {
+		return partybId;
+	}
+	public void setPartybId(String partybId) {
+		this.partybId = partybId;
+	}
+	public String getPartybName() {
+		return partybName;
+	}
+	public void setPartybName(String partybName) {
+		this.partybName = partybName;
+	}
+	public String getPartybLeader() {
+		return partybLeader;
+	}
+	public void setPartybLeader(String partybLeader) {
+		this.partybLeader = partybLeader;
+	}
+	public String getPartybLeaderIdcard() {
+		return partybLeaderIdcard;
+	}
+	public void setPartybLeaderIdcard(String partybLeaderIdcard) {
+		this.partybLeaderIdcard = partybLeaderIdcard;
+	}
+	public String getPartybLeaderPhone() {
+		return partybLeaderPhone;
+	}
+	public void setPartybLeaderPhone(String partybLeaderPhone) {
+		this.partybLeaderPhone = partybLeaderPhone;
+	}
+	public String getAddress() {
+		return address;
+	}
+	public void setAddress(String address) {
+		this.address = address;
+	}
+	public Date getSignDate() {
+		return signDate;
+	}
+	public void setSignDate(Date signDate) {
+		this.signDate = signDate;
+	}
+	public BigDecimal getTemporaryTotal() {
+		return temporaryTotal;
+	}
+	public void setTemporaryTotal(BigDecimal temporaryTotal) {
+		this.temporaryTotal = temporaryTotal;
+	}
+	public BigDecimal getUnitMoney() {
+		return unitMoney;
+	}
+	public void setUnitMoney(BigDecimal unitMoney) {
+		this.unitMoney = unitMoney;
+	}
+	public BigDecimal getTaxRate() {
+		return taxRate;
+	}
+	public void setTaxRate(BigDecimal taxRate) {
+		this.taxRate = taxRate;
+	}
+	public BigDecimal getConMoneyNtax() {
+		return conMoneyNtax;
+	}
+	public void setConMoneyNtax(BigDecimal conMoneyNtax) {
+		this.conMoneyNtax = conMoneyNtax;
+	}
+	public BigDecimal getConMoneyTax() {
+		return conMoneyTax;
+	}
+	public void setConMoneyTax(BigDecimal conMoneyTax) {
+		this.conMoneyTax = conMoneyTax;
+	}
+	public Date getStartDate() {
+		return startDate;
+	}
+	public void setStartDate(Date startDate) {
+		this.startDate = startDate;
+	}
+	public Date getEndDate() {
+		return endDate;
+	}
+	public void setEndDate(Date endDate) {
+		this.endDate = endDate;
+	}
+	public BigDecimal getPremiumRatio() {
+		return premiumRatio;
+	}
+	public void setPremiumRatio(BigDecimal premiumRatio) {
+		this.premiumRatio = premiumRatio;
+	}
+	public String getConRange() {
+		return conRange;
+	}
+	public void setConRange(String conRange) {
+		this.conRange = conRange;
+	}
+	public String getActivityinsId() {
+		return activityinsId;
+	}
+	public void setActivityinsId(String activityinsId) {
+		this.activityinsId = activityinsId;
+	}
+	public String getReturnStatus() {
+		return returnStatus;
+	}
+	public void setReturnStatus(String returnStatus) {
+		this.returnStatus = returnStatus;
+	}
+	public Date getCheckFinTime() {
+		return checkFinTime;
+	}
+	public void setCheckFinTime(Date checkFinTime) {
+		this.checkFinTime = checkFinTime;
+	}
+	public String getCheckStatus() {
+		return checkStatus;
+	}
+	public void setCheckStatus(String checkStatus) {
+		this.checkStatus = checkStatus;
+	}
+	public String getConPriceType() {
+		return conPriceType;
+	}
+	public void setConPriceType(String conPriceType) {
+		this.conPriceType = conPriceType;
+	}
+	public List<LsContractLaborPaymentEntity> getConPaymentList() {
+		return conPaymentList;
+	}
+	public void setConPaymentList(List<LsContractLaborPaymentEntity> conPaymentList) {
+		this.conPaymentList = conPaymentList;
+	}
+	
+	public String getTaskId() {
+		return taskId;
+	}
+
+	public void setTaskId(String taskId) {
+		this.taskId = taskId;
+	}
+
+	public boolean isEndCheckerFlag() {
+		return endCheckerFlag;
+	}
+
+	public void setEndCheckerFlag(boolean endCheckerFlag) {
+		this.endCheckerFlag = endCheckerFlag;
+	}
+
+	public List<String> getNowCheckerList() {
+		return nowCheckerList;
+	}
+
+	public void setNowCheckerList(List<String> nowCheckerList) {
+		this.nowCheckerList = nowCheckerList;
+	}
+
+	public String getComment() {
+		return comment;
+	}
+
+	public void setComment(String comment) {
+		this.comment = comment;
+	}
+}
+

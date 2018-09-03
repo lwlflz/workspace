@@ -1,0 +1,264 @@
+package com.build.cloud.modules.productplan.service.impl;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.map.MapUtil;
+
+import com.baomidou.mybatisplus.mapper.EntityWrapper;
+import com.baomidou.mybatisplus.plugins.Page;
+import com.baomidou.mybatisplus.service.impl.ServiceImpl;
+import com.build.cloud.common.exception.BusinessException;
+import com.build.cloud.common.utils.PageUtils;
+import com.build.cloud.common.utils.Query;
+import com.build.cloud.core.constant.DictConstant;
+import com.build.cloud.modules.bs.bean.CodeBean;
+import com.build.cloud.modules.bs.entity.BsWorkerEntity;
+import com.build.cloud.modules.bs.service.IBsCodeService;
+import com.build.cloud.modules.bs.service.IBsWorkerService;
+import com.build.cloud.modules.productplan.dao.ProRotaMapper;
+import com.build.cloud.modules.productplan.dto.ProRota;
+import com.build.cloud.modules.productplan.dto.ProRotaWorker;
+import com.build.cloud.modules.productplan.service.IProRotaService;
+import com.build.cloud.modules.productplan.service.IProRotaWorkerService;
+import com.build.cloud.modules.punch.entity.DevDeviceEntity;
+import com.build.cloud.modules.punch.entity.DevFaceCommandEntity;
+import com.build.cloud.modules.punch.service.IDevDeviceService;
+import com.build.cloud.modules.punch.service.IDevFaceCommandService;
+import com.build.cloud.modules.punch.service.IStatCardService;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+
+/**
+ * <p>
+ *  服务实现类
+ * </p>
+ *
+ * @author liangsen
+ * @since 2018-05-03
+ */
+@Service
+public class ProRotaServiceImpl extends ServiceImpl<ProRotaMapper, ProRota> implements IProRotaService {
+	@Autowired
+	private IProRotaWorkerService proRotaWorkerService;
+	@Autowired
+	protected IBsCodeService bsCodeService;
+	@Autowired
+	protected IBsWorkerService bsWorkerService;
+	@Autowired
+	protected IDevFaceCommandService devFaceCommandService;
+	@Autowired
+	protected IDevDeviceService devDeviceService;
+	@Autowired
+	private IStatCardService statCardService;
+
+	@Autowired
+	private ProRotaMapper proRotaMapper;
+	
+	@Override
+	@Transactional(propagation=Propagation.REQUIRED)
+	public String insertProRota(ProRota info) {
+		baseMapper.insert(info);
+		
+		if(info.getWorkerList()!=null&&info.getWorkerList().size()>0){
+			List<ProRotaWorker> workerList = info.getWorkerList();
+			
+			StringBuffer sb = new StringBuffer();
+			int x = 0;
+			for (ProRotaWorker worker : workerList) {
+				worker.setRotaId(info.getId());
+				//拼接考勤发送指令
+				BsWorkerEntity bsWorker = bsWorkerService.selectById(worker.getWorkerId());
+				if(x>0){
+					sb.append(" ");
+				}else{
+					sb.append("AddNameTable(");
+				}
+				sb.append(bsWorker.getDevCode()).append("=\"")
+				.append(bsWorker.getName()).append("\"");
+//				String str = "SetNameTable(129=\"张三\" 130=\"张三\")";
+				x++;
+			}
+			sb.append(")");
+			//插入花名册人员
+			proRotaWorkerService.insertBatch(info.getWorkerList());
+			
+			//保存考勤机指令
+			if(sb.length()>1){
+				insertCommand(info.getProjectId(),sb);
+			}
+		}
+		return info.getId();
+	}
+	
+	@Override
+	@Transactional(propagation=Propagation.REQUIRED)
+	public void insertWorkers(ProRotaWorker param) {
+		String rotaId = param.getRotaId();
+		String workerIds = param.getWorkerIds();
+		String szEmpId = param.getNgId();
+		
+		List<ProRotaWorker> list = Lists.newArrayList();
+		String[] ids = workerIds.split(",");
+		StringBuffer sb = new StringBuffer();
+		int x = 0;
+		for (String id : ids) {
+			ProRotaWorker worker = new ProRotaWorker();
+			worker.setRotaId(rotaId);
+			worker.setWorkerId(id);
+			worker.setNgId(szEmpId);
+			worker.setInDate(new Date());
+			list.add(worker);
+			
+			//拼接考勤发送指令
+			BsWorkerEntity bsWorker = bsWorkerService.selectById(id);
+			if(x>0){
+				sb.append(" ");
+			}else{
+				sb.append("AddNameTable(");
+			}
+			sb.append(bsWorker.getDevCode()).append("=\"")
+			.append(bsWorker.getName()).append("\"");
+//				String str = "SetNameTable(129=\"张三\" 130=\"张三\")";
+			x++;
+		}
+		sb.append(")");
+		
+		//保存花名册员工
+		proRotaWorkerService.insertBatch(list);
+		
+		//保存考勤机指令
+		if(sb.length()>1){
+			insertCommand(param.getProjectId(),sb);
+		}
+	}
+	
+	
+	
+	private void insertCommand(String projectId,StringBuffer commandStr){
+		//查询考勤设备
+		EntityWrapper<DevDeviceEntity> devEw = new EntityWrapper<DevDeviceEntity>();
+		devEw.eq("project_id", projectId);
+		List<DevDeviceEntity> devList = devDeviceService.selectList(devEw);
+		//保存考勤指令
+		List<DevFaceCommandEntity> commandList = Lists.newArrayList();
+		for (DevDeviceEntity devDeviceEntity : devList) {
+			DevFaceCommandEntity commandEntity = new DevFaceCommandEntity();
+			commandEntity.setCommand(commandStr.toString());
+			commandEntity.setRunStatus("0");
+			commandEntity.setSzSerial(devDeviceEntity.getSzSerial());
+			commandList.add(commandEntity);
+		}
+		if(commandList.size()>0){
+			devFaceCommandService.insertBatch(commandList);
+		}
+	}
+	
+	@Override
+	public PageUtils queryPage(Map<String, Object> params) {
+		Query<ProRota> query = new Query<ProRota>(params);
+		Page<ProRota> page = query.getPage();
+		String projectId = MapUtil.getStr(params,"projectId");
+		ProRota rota = new ProRota();
+		rota.setProjectId(projectId);
+		List<ProRota> resList = baseMapper.selectRotaPage(page, rota);
+		List<CodeBean> code = bsCodeService.getTeamType(DictConstant.WORK_KIND);
+		for (ProRota proRota : resList) {
+			for (CodeBean codeBean : code) {
+				if (codeBean.getType().equals(proRota.getTeamType())) {
+					proRota.setTeamTypename(codeBean.getValue());
+				}
+			}
+//			proRota.setTeamTypename(DictUtils.getDictLabel(proRota.getTeamType(), "work_type", ""));
+		}
+		
+		page.setRecords(resList);
+		return new PageUtils(page);
+	}
+
+	@Override
+	@Transactional(propagation=Propagation.REQUIRED)
+	public void inField(ProRotaWorker worker) {
+		StringBuffer sb = new StringBuffer();
+		sb.append("AddNameTable(").append(worker.getDevCode()).append("=\"")
+				.append(worker.getName()).append("\")");
+		insertCommand(worker.getProjectId(), sb);
+		ProRotaWorker entity = new ProRotaWorker();
+		entity.setId(worker.getId());
+		entity.setInDate(new Date());
+		entity.setState("0");
+		proRotaWorkerService.updateById(entity);
+	}
+
+	@Override
+	@Transactional(propagation=Propagation.REQUIRED)
+	public void outField(ProRotaWorker worker) {
+		StringBuffer sb = new StringBuffer();
+		sb.append("DeleteEmployee(id=\"").append(worker.getDevCode()).append("\")");
+		insertCommand(worker.getProjectId(), sb);
+		ProRotaWorker entity = new ProRotaWorker();
+		entity.setId(worker.getId());
+		entity.setOutDate(new Date());
+		entity.setState("1");
+		proRotaWorkerService.updateById(entity);
+	}
+
+	@Override
+	@Transactional(propagation=Propagation.REQUIRED)
+	public void deleteAsId(ProRotaWorker worker) {
+		StringBuffer sb = new StringBuffer();
+		sb.append("DeleteEmployee(id=\"").append(worker.getDevCode()).append("\")");
+		Map<String, Object> params = Maps.newHashMap();
+		params.put("devCode", worker.getDevCode());
+		params.put("projectId", worker.getProjectId());
+		Integer number = statCardService.selectWorkerStatCard(params);
+		if (number != null && number > 5) {
+			throw new BusinessException("该员工已经产生考勤记录，不能删除");
+		}
+		insertCommand(worker.getProjectId(), sb);
+		proRotaWorkerService.deleteById(worker.getId());
+	}
+
+	@Override
+	@Transactional(propagation=Propagation.REQUIRED)
+	public void deleteRota(String id) {
+		ProRota rota = baseMapper.selectById(id);
+		Map<String, Object> param = Maps.newHashMap();
+		param.put("rotaId", id);
+		List<ProRotaWorker> list = proRotaWorkerService.selectWorkersInfo(param);
+		if (CollectionUtil.isEmpty(list)){
+			baseMapper.deleteById(id);
+			return;
+		}
+		
+		for (ProRotaWorker worker : list) {
+			Map<String, Object> params = Maps.newHashMap();
+			params.put("devCode", worker.getDevCode());
+			params.put("projectId", rota.getProjectId());
+			Integer number = statCardService.selectWorkerStatCard(params);
+			if (number != null && number > 5) {
+				throw new BusinessException("员工" + worker.getName() + "已经产生考勤记录，花名册不能删除");
+			}
+		}
+		
+		for(ProRotaWorker worker : list){
+			StringBuffer sb = new StringBuffer();
+			sb.append("DeleteEmployee(id=\"").append(worker.getDevCode()).append("\")");
+			insertCommand(worker.getProjectId(), sb);
+		}
+		
+		EntityWrapper<ProRotaWorker> wrapper = new EntityWrapper<ProRotaWorker>();
+		wrapper.eq("rota_id", id);
+		proRotaWorkerService.delete(wrapper);
+//		把删除状态改成删除记录
+//		baseMapper.deleteById(id);
+		proRotaMapper.deleteByIdPhysic(id);
+	}
+}

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.build.cloud.modules.productplan.dao.ProContractPaymentMapper">
+
+	<!-- 通用查询映射结果 -->
+	<resultMap id="BaseResultMap" type="com.build.cloud.modules.productplan.dto.ProContractPayment">
+		<id column="id" property="id" />
+		<result column="con_id" property="conId" />
+		<result column="pay_node" property="payNode" />
+		<result column="pay_rate" property="payRate" />
+		<result column="begin_date" property="beginDate" />
+		<result column="end_date" property="endDate" />
+		<result column="duration" property="duration" />
+		<result column="project_num" property="projectNum" />
+		<result column="unit_price" property="unitPrice" />
+		<result column="con_money_ntax" property="conMoneyNtax" />
+		<result column="con_money_tax" property="conMoneyTax" />
+		<result column="outputed_value" property="outputedValue" />
+		<result column="apply_total" property="applyTotal" />
+		<result column="pay_total" property="payTotal" />
+		<result column="apply_unpay_total" property="applyUnpayTotal" />
+		<result column="create_time" property="createTime" />
+		<result column="create_by" property="createBy" />
+		<result column="update_time" property="updateTime" />
+		<result column="update_by" property="updateBy" />
+		<result column="valid" property="valid" />
+	</resultMap>
+
+</mapper>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.build.cloud.modules.punch.dao.StatCardDao">
+
+	<select id="selectWorkerStatCard" parameterType="java.util.Map" resultType="java.lang.Integer">
+		SELECT
+		  COUNT(*)
+		FROM
+		  stat_card a
+		    LEFT JOIN bs_worker b ON a.ng_user_id = b.dev_code
+		    LEFT JOIN pro_rota_worker c ON b.id = c.worker_id
+		    LEFT JOIN pro_rota d ON c.rota_id = d.id
+		WHERE
+		  a.ng_user_id =#{devCode} AND d.project_id = #{projectId}
+	</select>
+
+
+</mapper>

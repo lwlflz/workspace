@@ -1,0 +1,12 @@
+1535680498156	Delete element
+1535681993402	Extract local variable 'iniSecurityManagerFactory'
+1535682078932	Extract local variable 'instance'
+1535682153931	Extract local variable 'subject'
+1535682192036	Extract local variable 'usernamePasswordToken'
+1535702099202	Extract local variable 'session'
+1535702178044	Extract local variable 'attribute'
+1535703795331	Extract local variable 'principal'
+1535704137341	Extract local variable 'simpleAuthenticationInfo'
+1535704236027	Extract local variable 'userName'
+1535704283765	Extract local variable 'permissions'
+1535704620503	Extract local variable 'simpleAuthenticationInfo'

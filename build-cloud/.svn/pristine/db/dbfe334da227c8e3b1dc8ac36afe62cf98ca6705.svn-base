@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.build.cloud.modules.sys.dao.SysRoleDao">
+	
+	<select id="selectPageByMap" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		select 
+			su.login_name as loginName,
+			se.company_id as companyId,
+			se.company_name as companyName,
+			se.dept_id as deptId,
+			se.dept_name as deptName,
+			se.emp_name as empName,
+			se.id,
+			se.user_id userId,
+			ur.role_id as roleId
+		from sys_user su 
+		LEFT JOIN 
+			sys_user_role ur on ur.user_id = su.id
+		LEFT JOIN
+			sys_employee se on se.user_id = su.id
+		where 
+			su.valid = '0' and su.`status` = '0'
+		<if test="roleId!=null">
+			AND ur.role_id = #{roleId}
+		</if>
+		<if test="companyId!=null">
+			AND se.company_id = #{companyId}
+		</if>
+		<if test="deptId!=null">
+			AND se.dept_id = #{deptId}
+		</if>		
+	</select>
+	
+	<select id="findUserAndProjectByRoleId" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT
+			ur.id as id,
+			u.user_name as userName,
+			u.company_id as companyId,
+			c.company_name as companyName,
+			u.login_name as loginName,
+			ur.user_id as userId
+		FROM
+			sys_user_role ur
+		LEFT JOIN 
+			sys_user u
+		ON 
+			ur.user_id = u.id
+		LEFT JOIN
+			sys_company c
+		ON
+			c.id = u.company_id
+		where 
+			ur.role_id = #{roleId}
+		GROUP BY u.id
+	</select>
+	
+	<select id="selectRoleCompanyList"	resultType="com.build.cloud.modules.sys.form.RoleCompanyForm">
+		select 
+			a.role_id as roleId,
+			b.id as companyId,
+			b.company_code as companyCode,
+			b.company_name as companyName		
+		from sys_role_company a
+		 	left join sys_company b 
+			on a.company_id = b.id
+	</select>
+	
+	<select id="findRoleByUserId" parameterType="String" resultType="com.build.cloud.modules.sys.entity.SysRoleEntity">
+		SELECT
+			r.id as id,
+			r.role_code as roleCode,
+			r.role_name as roleName,
+			ur.company_id as companyId,
+			c.company_name as companyName
+		FROM
+			sys_role r
+		LEFT JOIN
+			sys_user_role ur
+		ON
+			r.id = ur.role_id
+		LEFT JOIN
+			sys_company c
+		ON
+			c.id = ur.company_id
+		WHERE
+			ur.user_id = #{userId}
+		AND
+			c.status = '0'
+	</select>
+	
+	
+</mapper>

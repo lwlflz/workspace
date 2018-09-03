@@ -1,0 +1,70 @@
+package com.build.cloud.modules.sys.service.impl;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.ibatis.annotations.Param;
+import org.springframework.stereotype.Service;
+
+import com.baomidou.mybatisplus.mapper.EntityWrapper;
+import com.baomidou.mybatisplus.plugins.Page;
+import com.baomidou.mybatisplus.service.impl.ServiceImpl;
+import com.build.cloud.common.utils.PageUtils;
+import com.build.cloud.common.utils.Query;
+import com.build.cloud.modules.sys.dao.SysCompanyDao;
+import com.build.cloud.modules.sys.entity.SysCompanyEntity;
+import com.build.cloud.modules.sys.service.ISysCompanyService;
+
+import cn.hutool.core.util.StrUtil;
+
+@Service("sysCompanyService")
+public class SysCompanyServiceImpl extends ServiceImpl<SysCompanyDao, SysCompanyEntity> implements ISysCompanyService {
+	
+	
+	
+	
+	@Override
+	public PageUtils queryPage(Map<String, Object> params) {
+		String corpCode = (String)params.get("corpCode");
+		String status = (String)params.get("status");
+		String keywords = (String)params.get("keywords");
+		EntityWrapper<SysCompanyEntity> ew = new EntityWrapper<SysCompanyEntity>();
+		if (StrUtil.isNotEmpty(corpCode)) {
+			ew.eq("corp_code", corpCode);
+		}
+		if (StrUtil.isNotEmpty(status)) {
+			ew.eq("status", status);
+		}
+		if (!StrUtil.isEmpty(keywords)) {
+			ew.and().eq("company_name", keywords).or().eq("corp_name", keywords);
+		}
+		ew.orderBy("create_time desc");		
+		Page<SysCompanyEntity> page =
+			this.selectPage(new Query<SysCompanyEntity>(params).getPage(), ew);
+		return new PageUtils(page);
+	}
+	
+	
+	@Override
+	public List<Map<String, Object>> selectByUserId(String userId) {
+		return baseMapper.selectByUserId(userId);
+	}
+
+
+	@Override
+	public List<SysCompanyEntity> getCompanyChild(Map<String, Object> params) {
+		return baseMapper.getCompanyChild(params);
+	}
+
+
+	@Override
+	public List<SysCompanyEntity> getCompanyByName(String companyName) {
+		
+//		 List<T> selectByMap(@Param("cm") Map<String, Object> columnMap);
+		Map<String, Object> columnMap = new HashMap<>();
+		columnMap.put("company_name", companyName);
+		return  baseMapper.selectByMap(columnMap);
+	}
+	
+	
+}

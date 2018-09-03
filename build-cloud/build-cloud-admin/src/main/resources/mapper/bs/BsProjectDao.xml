@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.build.cloud.modules.bs.dao.BsProjectDao">
+
+	<select id="findProjectListByObject" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+			p.id as id,
+			p.project_code as projectCode,
+			p.project_name as projectName,
+			p.pro_id as proId,
+			i.op_project_name as opProjectName,
+			p.company_id as companyId,
+			c.company_name as companyName,
+			p.leader as leader,
+			p.project_address as projectAddress,
+			p.project_date as projectDate,
+			p.construction_id as constructionId,
+			d.company_name as constructionName,
+			p.generalcontractor_id as generalcontractorId,
+			e.company_name as generalcontractorName,
+			p.supervisor_id as supervisorId,
+			f.company_name as supervisorName,
+			p.designer_id as designerId,
+			g.company_name as designerName,
+			p.labor_id as laborId,
+			h.company_name as laborName,
+			p.structure_type as structureType,
+			p.height as height,
+			p.remarks as remarks,
+			p.create_by as createBy,
+			p.create_time as createTime,
+			p.update_by as updateBy,
+			p.update_time as updateTime,
+			p.status as status ,
+			p.valid as valid
+		FROM
+			bs_project p
+		LEFT JOIN
+			sys_company c
+		ON
+			p.company_id = c.id
+		LEFT JOIN
+			sys_company d
+		on
+			p.construction_id=d.id	
+		LEFT JOIN
+			sys_company e
+		on
+			p.generalcontractor_id=e.id
+		LEFT JOIN
+			sys_company f
+		on
+			p.supervisor_id=f.id		
+		LEFT JOIN
+			sys_company g
+		on
+			p.designer_id=g.id	
+		LEFT JOIN
+			sys_company h
+		on
+			p.labor_id=h.id	
+		LEFT JOIN
+			op_public_project i
+		on
+			p.pro_id=i.id							
+		WHERE 
+			p.valid = '0'
+		<if test="status != null and status != ''">
+			and p.status = #{status}
+		</if>
+		<if test="companyId != null and companyId != ''">
+			and p.company_id = #{companyId}
+		</if>
+		<if test="projectCode != null and projectCode != ''">
+			and p.project_code like concat(concat("%",#{projectCode}),"%")
+		</if>
+		<if test="projectName != null and projectName != ''">
+			and p.project_name like concat(concat("%",#{projectName}),"%")
+		</if>
+		<if test="keywords != null and keywords != ''">
+			and (p.project_name like concat(concat("%",#{keywords}),"%")
+			or p.project_code like concat(concat("%",#{keywords}),"%")
+			or p.leader like concat(concat("%",#{keywords}),"%"))
+		</if>
+	</select>
+	
+	
+	<select id="findByProId" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT
+			p.id as id,
+			p.project_code as projectCode,
+			p.project_name as projectName,
+			p.company_id as companyId,
+			c.company_name as companyName,
+			p.leader as leader,
+			p.project_address as projectAddress,
+			p.project_date as projectDate,
+			p.construction_id as constructionId,
+			d.company_name as constructionName,
+			p.generalcontractor_id as generalcontractorId,
+			e.company_name as generalcontractorName,
+			p.supervisor_id as supervisorId,
+			f.company_name as supervisorName,
+			p.designer_id as designerId,
+			g.company_name as designerName,
+			p.labor_id as laborId,
+			h.company_name as laborName,
+			p.structure_type as structureType,
+			p.height as height,
+			p.remarks as remarks,
+			p.create_by as createBy,
+			p.create_time as createTime,
+			p.update_by as updateBy,
+			p.update_time as updateTime,
+			p.status as status ,
+			p.valid as valid
+		FROM
+			bs_project p
+		LEFT JOIN
+			sys_company c
+		ON
+			p.company_id = c.id
+		LEFT JOIN
+			sys_company d
+		on
+			p.construction_id=d.id	
+		LEFT JOIN
+			sys_company e
+		on
+			p.generalcontractor_id=e.id
+		LEFT JOIN
+			sys_company f
+		on
+			p.supervisor_id=f.id		
+		LEFT JOIN
+			sys_company g
+		on
+			p.designer_id=g.id	
+		LEFT JOIN
+			sys_company h
+		on
+			p.labor_id=h.id							
+		WHERE 
+			p.valid = '0'
+		<if test="id != null and id != ''">
+			and p.id=#{id}
+		</if>
+		<if test="ids != null">
+			and p.id in
+			<foreach collection="ids" index="index" item="item" open="(" separator="," close=")">  
+		        #{item}  
+		    </foreach>  
+		</if>
+	</select>
+	
+	<select id="getProjectListByCompanyId" parameterType="String" resultType="com.build.cloud.modules.bs.entity.BsProjectEntity">
+		SELECT 
+			p.id as id,
+		  	p.project_code as projectCode,
+	    	p.project_name as projectName,
+	  		p.company_id as companyId
+		FROM
+			bs_project p
+		
+		WHERE
+			p.company_id = #{companyId}
+		AND
+			p.status = '0'
+		AND
+			P.valid = '0'
+	</select>
+	
+	<select id="getPlanCiteProject" parameterType="string" resultType="java.lang.Integer">
+		select count(1) as count from pro_plan_info where project_id = #{id}
+	</select>
+</mapper>

@@ -1,0 +1,22 @@
+{
+  "hints": [],
+  "groups": [
+    {
+      "sourceType": "com.build.cloud.common.config.DBProperties",
+      "name": "hikari",
+      "type": "com.build.cloud.common.config.DBProperties"
+    }
+  ],
+  "properties": [
+    {
+      "sourceType": "com.build.cloud.common.config.DBProperties",
+      "name": "hikari.master",
+      "type": "com.zaxxer.hikari.HikariDataSource"
+    },
+    {
+      "sourceType": "com.build.cloud.common.config.DBProperties",
+      "name": "hikari.slave",
+      "type": "com.zaxxer.hikari.HikariDataSource"
+    }
+  ]
+}

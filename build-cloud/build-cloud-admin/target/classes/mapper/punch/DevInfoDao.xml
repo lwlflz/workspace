@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.build.cloud.modules.punch.dao.DevInfoDao">
+
+	<select id="queryName" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT
+			b.project_name AS projectName,
+			c.company_name AS companyName
+		FROM
+			dev_device AS a
+		RIGHT JOIN bs_project AS b ON b.id = a.project_id
+		LEFT JOIN sys_company AS c ON c.id = b.company_id
+		WHERE
+			a.sz_serial = (
+				SELECT
+					sz_serial
+				FROM
+					dev_info
+				WHERE
+					id = #{id}
+			)
+	</select>
+</mapper>

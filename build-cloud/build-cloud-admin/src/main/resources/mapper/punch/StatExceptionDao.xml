@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper
+	namespace="com.build.cloud.modules.punch.dao.StatExceptionDao">
+
+	<select id="getEntity" parameterType="java.util.Map" resultType="com.build.cloud.modules.punch.entity.StatExceptionEntity">
+		SELECT DISTINCT
+			ex.ex_date,
+			ex.id,
+			ex.ex_type,
+			ex.worker_id,
+			ex.remark,
+			ex.sc_id 
+		FROM
+			stat_exception AS ex 
+		WHERE
+			ex.ex_type = "2" 
+			AND ex.worker_id = "996560773531676674" 
+			AND ex.ex_date = "2018-05-08"
+	</select>
+
+</mapper>

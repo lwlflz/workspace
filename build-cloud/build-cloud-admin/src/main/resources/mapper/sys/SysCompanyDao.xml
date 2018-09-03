@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.build.cloud.modules.sys.dao.SysCompanyDao">
+	<select id="selectByUserId" resultType="java.util.Map" parameterType="java.lang.String">
+		SELECT
+			sc.id,
+			sc.company_name AS companyName 
+		FROM
+			sys_company AS sc
+			LEFT JOIN sys_user_role AS sur ON sc.id = sur.company_id 
+		WHERE
+			sc.valid = '0' 
+			AND sc.`status` = '0' 
+			AND sur.user_id = #{userId}
+		GROUP BY sc.company_name
+	</select>
+	
+	<select id="getCompanyChild" resultType="com.build.cloud.modules.sys.entity.SysCompanyEntity" parameterType="java.util.Map">
+		SELECT
+			id AS id,
+			company_code AS companyCode,
+			parent_id AS parentId,
+			parent_code AS parentCode,
+			parent_codes AS parentCodes,
+			tree_sort AS treeSort,
+			tree_sorts AS treeSorts,
+			company_name AS companyName,
+			pinyin_code AS pinyinCode,
+			remarks,
+			corp_code AS corpCode,
+			corp_name AS corpName,
+			corporate,
+			taxpayer_regis_num AS taxpayerRegisNum,
+			industry,
+			registered_capital AS registeredCapital,
+			established,
+			area_code AS areaCode,
+			address,
+			contact,
+			phone,
+			fax,
+			web_url AS webUrl,
+			`status`,
+			create_by AS createBy,
+			create_time AS createTime,
+			update_by AS updateBy,
+			update_time AS updateTime,
+			`valid`
+		FROM
+			sys_company
+		WHERE
+		  find_in_set(#{companyId},parent_codes)
+		AND (
+			valid = '0'
+			AND corp_code = #{corpCode}
+		)
+	</select>
+</mapper>

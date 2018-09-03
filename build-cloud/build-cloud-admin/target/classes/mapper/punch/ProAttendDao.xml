@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.build.cloud.modules.punch.dao.ProAttendDao">
+	<select id="queryMaxDate" resultType="java.util.Map">
+		SELECT MAX(DATE(attend_date)) AS attendDate FROM `pro_attend`
+	</select>
+	<select id="queryCrossDay" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT exit_time as exitTime
+		FROM `pro_attend`
+		WHERE status = 1
+		AND DATE(attend_date) = #{attendDate}
+		AND worker_id = #{workerId}
+		AND project_id = #{projectId}
+	</select>
+</mapper>

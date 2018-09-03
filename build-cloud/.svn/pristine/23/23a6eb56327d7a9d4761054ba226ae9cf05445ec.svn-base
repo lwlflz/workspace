@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.build.cloud.modules.productplan.dao.ProPlanDetailMapper">
+
+	<!-- 通用查询映射结果 -->
+	<resultMap id="BaseResultMap" type="com.build.cloud.modules.productplan.dto.ProPlanDetail">
+		<id column="id" property="id" />
+		<result column="pro_id" property="proId" />
+		<result column="wbs_code" property="wbsCode" />
+		<result column="wbs_name" property="wbsName" />
+		<result column="name_property" property="nameProperty" />
+		<result column="property_type" property="propertyType" />
+		<result column="plan_begin_date" property="planBeginDate" />
+		<result column="plan_end_date" property="planEndDate" />
+		<result column="duration" property="duration" />
+		<result column="quantities" property="quantities" />
+		<result column="unit" property="unit" />
+		<result column="act_begin_date" property="actBeginDate" />
+		<result column="act_end_date" property="actEndDate" />
+		<result column="ahead_delay" property="aheadDelay" />
+		<result column="award_punish" property="awardPunish" />
+		<result column="idx" property="idx" />
+		<result column="unique_id" property="uniqueId" />
+		<result column="parent_id" property="parentId" />
+		<result column="pre_id" property="preId" />
+		<result column="outline_level" property="outlineLevel" />
+		<result column="leaf" property="leaf" />
+		<result column="is_worked" property="isWorked" />
+		<result column="consplit_id" property="consplitId" />
+		<result column="parent_id" property="parentId" />
+		<result column="add_delete" property="addDelete" />
+		<result column="create_time" property="createTime" />
+		<result column="create_by" property="createBy" />
+		<result column="update_time" property="updateTime" />
+		<result column="update_by" property="updateBy" />
+		<result column="valid" property="valid" />
+	</resultMap>
+	
+	<delete id="physicsDelete">
+		delete FROM pro_plan_detail 
+		<where>
+			pro_id = #{proId} 
+		</where>
+	</delete>
+
+	<select id="queryPlanDetailList" parameterType="String" resultType="com.build.cloud.modules.productplan.dto.ProPlanDetail">
+		SELECT
+			*
+		FROM
+			pro_plan_detail
+		WHERE
+			pro_id IN (
+				SELECT
+					id
+				FROM
+					pro_plan_info
+				WHERE
+					eff_status = 1
+				AND check_status = 2
+				AND return_status = 0
+				AND valid = 0
+and project_id = #{_parameter}
+			)
+		AND valid = 0
+	</select>
+</mapper>

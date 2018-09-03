@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.build.cloud.modules.bs.dao.BsWorkerDao">
+
+	<sql id="Base_Column_List">
+		w.id,
+		w.`name`,
+		w.national,
+		w.idcard,
+		w.work_type AS workType,
+		c.code_name AS workTypeName,
+		w.age,
+		w.bank_account AS bankAccount,
+		w.bank,
+		w.is_signed_contract as isSignedContract,
+		w.wage,
+		w.phone,
+		w.skill_level AS skillLevel,
+		w.idcard_img_url as idcardImgUrl,
+		w.recently_img_url as recentlyImgUrl,
+		w.idcard_img_name as idcardImgName,
+		w.recently_img_name as recentlyImgName,
+		w.area,
+		w.sex,
+		w.create_by AS createBy,
+		w.create_time AS createTime,
+		w.update_by AS updateBy,
+		w.update_time AS updateTime,
+		w.dev_code AS devCode 
+	</sql>
+
+	<select id="selectPageByMap" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		<include refid="Base_Column_List" />
+			,
+			u.departure_date AS departureDate,
+			u.login_name AS loginName,
+			u.`password`,
+			u.`status`
+		FROM
+			bs_worker w
+		LEFT JOIN
+			sys_user u ON w.user_id = u.id
+		LEFT JOIN
+			bs_code c ON c.code_num = w.work_type
+		WHERE
+			u.valid = '0'
+			AND 
+			w.valid = '0'
+		<if test="name!=null and name != ''">
+			AND name like concat(concat("%",#{name}),"%")
+		</if>
+		<if test="idcard!=null and idcard != ''">
+			AND idcard=#{idcard}
+		</if>
+		<if test="status!=null and status != ''">
+			AND u.status=#{status}
+		</if>
+		<if test="bankAccount!=null and  bankAccount != ''">
+			AND bank_account=#{bankAccount}
+		</if>
+		<if test="phone!=null and phone != ''">
+			AND phone=#{phone}
+		</if>
+		<if test="workType!=null and workType != ''">
+			AND work_type=#{workType}
+		</if>
+		<if test="companyId != null and conpamyId != ''">
+			AND w.company_id = #{companyId}
+		</if>
+		<if test="keywords!=null and keywords != ''">
+			AND (name like concat(concat("%",#{keywords}),"%") OR phone like concat(concat("%",#{keywords}),"%") OR idcard like concat(concat("%",#{keywords}),"%") )
+		</if>
+		ORDER BY 
+			w.create_time
+		DESC
+	</select>
+	
+	<select id="selectWorker" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT
+			bw.id,
+			bw.user_id AS userId,
+			u.login_name AS loginName,
+			bw.idcard_img_url as idcardImgUrl,
+			bw.recently_img_url as recentlyImgUrl,
+			bw.idcard_img_name as idcardImgName,
+			bw.recently_img_name as recentlyImgName,
+			bw.`name` AS userName,
+			bw.is_signed_contract as isSignedContract,
+			bw.national,
+			bw.idcard 
+		FROM
+			bs_worker AS bw
+			LEFT JOIN sys_user AS u ON bw.user_id = u.id 
+		WHERE
+			u.valid = '0' 
+			AND bw.valid = '0' 
+			AND (u.`status` = '0' OR u.`status` = '2')
+			AND u.company_id = #{companyId}
+			<if test="condition!=null">
+			AND (
+				bw.`name` LIKE CONCAT ( '%', #{condition}, '%' ) 
+				OR bw.idcard LIKE CONCAT ( '%', #{condition}, '%' ) 
+				OR u.login_name LIKE CONCAT ( '%', #{condition}, '%' ) 
+			)
+			</if>
+	</select>
+	
+	<select id="getInfoByIdCard" parameterType="java.util.Map" resultType="com.build.cloud.modules.bs.bean.BsWorkerBean">
+		SELECT
+			bw.`name` AS `name`,
+			bw.idcard AS idcard,
+			bw.work_type AS workType,
+			bw.age AS age,
+			bw.bank_account AS bankAccount,
+			bw.idcard_img_url as idcardImgUrl,
+			bw.recently_img_url as recentlyImgUrl,
+			bw.idcard_img_name as idcardImgName,
+			bw.recently_img_name as recentlyImgName,
+			bw.bank,
+			bw.is_signed_contract as isSignedContract,
+			bw.national,
+			bw.wage,
+			bw.phone,
+			bw.skill_level AS skillLevel,
+			bw.area,
+			bw.sex,
+			bw.is_real_name AS isRealName,
+			bw.entry_date AS entryDate,
+			sc.company_name AS companyName,
+			IFNULL( SUM( pa.attend_time ), 0 ) AS attendTime,
+			su.login_name AS loginName,
+			su.`password` 
+		FROM
+			bs_worker AS bw
+			LEFT JOIN sys_user AS su ON bw.user_id = su.id
+			LEFT JOIN sys_company AS sc ON bw.company_id = sc.id
+			LEFT JOIN pro_attend AS pa ON bw.id = pa.worker_id 
+		WHERE
+			bw.idcard = #{idcard}
+		GROUP BY
+			bw.company_id 
+		ORDER BY
+			entryDate DESC
+	</select>
+
+</mapper>

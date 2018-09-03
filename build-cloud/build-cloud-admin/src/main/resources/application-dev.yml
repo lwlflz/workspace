@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    driverClassName: com.mysql.cj.jdbc.Driver
+    type: com.zaxxer.hikari.HikariDataSource
+hikari:
+  master:
+    jdbc-url: jdbc:mysql://192.168.10.192:3306/ddjs-dev?allowMultiQueries=true&serverTimezone=CTT&characterEncoding=utf-8&useUnicode=true&useSSL=false&autoReconnect=true&zeroDateTimeBehavior=convertToNull
+    username: ddjs-dev
+    password: ENC(oxP3P129g2UkHQy3/tz39qs+yOFqh+Yb)
+    maximum-pool-size: 20
+    pool-name: master
+    connection-timeout: 30000
+    idle-timeout: 600000
+    max-lifetime: 1765000
+  slave:
+    jdbc-url: jdbc:mysql://192.168.10.192:3306/ddjs-dev?allowMultiQueries=true&serverTimezone=CTT&characterEncoding=utf-8&useUnicode=true&useSSL=false&autoReconnect=true&zeroDateTimeBehavior=convertToNull
+    username: ddjs-dev
+    password: ENC(oxP3P129g2UkHQy3/tz39qs+yOFqh+Yb)
+    maximum-pool-size: 80
+    pool-name: slave
+    connection-timeout: 30000
+    idle-timeout: 600000
+    max-lifetime: 1765000
+    read-only: true

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.build.cloud.modules.bs.dao.BsCodeDao">
+
+	<!-- 通用查询映射结果 -->
+	<resultMap id="BaseResultMap" type="com.build.cloud.modules.bs.entity.BsCodeEntity">
+		<id column="id" property="id" />
+		<result column="code_type" property="codeType" />
+		<result column="code_num" property="codeNum" />
+		<result column="code_name" property="codeName" />
+		<result column="create_time" property="createTime" />
+		<result column="create_by" property="createBy" />
+		<result column="update_time" property="updateTime" />
+		<result column="update_by" property="updateBy" />
+		<result column="valid" property="valid" />
+	</resultMap>
+	
+	<select id="getTeamType" parameterType="string" resultType="com.build.cloud.modules.bs.bean.CodeBean">
+		SELECT
+			code_type as type,
+			is_special as isSpecial,
+			code_num as code,
+			code_name as value
+		FROM
+			bs_code c
+		WHERE
+			c.code_type = #{type}
+		order by code_num
+	</select>
+
+	<delete id="physicsDelete">
+		DELETE FROM bs_code 
+		<where>
+			code_type = #{codeType} 
+		</where>
+	</delete>
+</mapper>

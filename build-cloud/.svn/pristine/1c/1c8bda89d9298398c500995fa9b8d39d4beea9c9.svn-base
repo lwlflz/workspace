@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.build.cloud.modules.productplan.dao.ProRotaWorkerMapper">
+
+	<!-- 通用查询映射结果 -->
+	<resultMap id="BaseResultMap" type="com.build.cloud.modules.productplan.dto.ProRotaWorker">
+		<id column="id" property="id" />
+		<result column="rota_id" property="rotaId" />
+		<result column="worker_id" property="workerId" />
+		<result column="ng_id" property="ngId" />
+		<result column="name" property="name" />
+		<result column="idcard" property="idcard" />
+		<result column="phone" property="phone" />
+		<result column="work_type" property="workType" />
+		<result column="age" property="age" />
+		<result column="skill_level" property="skillLevel" />
+	</resultMap>
+
+
+	<select id="selectWorkersInfo" parameterType="java.util.Map" resultType="com.build.cloud.modules.productplan.dto.ProRotaWorker">
+		SELECT 
+			t.id,
+			t.rota_id,
+			t.worker_id,
+			t.ng_id,
+			a.name,
+			a.idcard,
+			a.phone,
+			a.work_type,
+			a.age,
+			a.skill_level,
+			a.dev_code,
+			t.state
+		FROM pro_rota_worker t 
+		LEFT JOIN 
+			bs_worker a ON t.worker_id = a.id 
+		WHERE 
+			a.valid = '0' AND t.rota_id = #{rotaId}
+	</select>
+</mapper>

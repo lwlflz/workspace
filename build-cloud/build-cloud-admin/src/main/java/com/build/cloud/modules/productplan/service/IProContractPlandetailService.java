@@ -1,0 +1,23 @@
+package com.build.cloud.modules.productplan.service;
+
+import java.util.List;
+import java.util.Map;
+
+import com.build.cloud.modules.productplan.dto.ProContractPlandetail;
+import com.baomidou.mybatisplus.service.IService;
+
+/**
+ * <p>
+ *  服务类
+ * </p>
+ *
+ * @author liangsen
+ * @since 2018-04-26
+ */
+public interface IProContractPlandetailService extends IService<ProContractPlandetail> {
+	void physicsDelete(String conId);
+	
+	List<ProContractPlandetail> selectConDetail(ProContractPlandetail pcp);
+	
+	Map<String,Integer> selectLaborFinishedCount(Map<String,String> map);
+}

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.build.cloud.modules.bs.dao.BsTeamDao">
+	
+	<select id="selectTeamByProjectId" parameterType="java.util.Map" resultType="com.build.cloud.modules.bs.entity.BsTeamEntity">
+		select b.* from pro_rota a join bs_team b on a.team_id=b.id where 1=1
+		<if test="projectId !=null and projectId !=''">
+			and a.project_id=#{projectId}
+		</if>
+		<if test=" projectId == null or projectId ==''">
+			and a.project_id in (select id from bs_project where company_id=#{companyId})
+		</if>
+		<if test=" keywords != null and keywords !=''">
+			and (
+			b.team_name LIKE CONCAT ( '%', #{keywords}, '%' )
+			or b.team_type_name LIKE CONCAT ( '%', #{keywords}, '%' )
+			or b.team_leader LIKE CONCAT ( '%', #{keywords}, '%' )
+			)
+		</if>
+	</select>
+
+</mapper>
