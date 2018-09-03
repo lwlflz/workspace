@@ -6,6 +6,6 @@ config_local*
 client/audio/music
 .DS_Store
 *.swp
-/.metadata
-/.recommenders
-/target/
+.metadata
+.recommenders
+target/
