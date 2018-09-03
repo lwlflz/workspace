@@ -7,3 +7,5 @@ client/audio/music
 .DS_Store
 *.swp
 /.metadata
+/.recommenders
+/target/
