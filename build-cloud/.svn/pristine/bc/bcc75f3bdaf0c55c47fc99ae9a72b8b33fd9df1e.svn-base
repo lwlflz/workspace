@@ -1,0 +1,65 @@
+package com.build.cloud.modules.sys.service.impl;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.stereotype.Service;
+
+import com.baomidou.mybatisplus.mapper.EntityWrapper;
+import com.baomidou.mybatisplus.plugins.Page;
+import com.baomidou.mybatisplus.service.impl.ServiceImpl;
+import com.build.cloud.common.utils.PageUtils;
+import com.build.cloud.common.utils.Query;
+import com.build.cloud.common.utils.StringUtil;
+import com.build.cloud.modules.sys.dao.SysEmployeeTypeDao;
+import com.build.cloud.modules.sys.entity.SysEmployeeTypeEntity;
+import com.build.cloud.modules.sys.service.ISysEmployeeTypeService;
+
+import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.StrUtil;
+
+/**
+ * 
+* Title: SysEmployeeTypeServiceImpl
+* Description: 人员分类
+* @author 鲁四围 
+* @date 2018年4月11日
+ */
+@Service("sysEmployeeTypeService")
+public class SysEmployeeTypeServiceImpl  extends ServiceImpl<SysEmployeeTypeDao,SysEmployeeTypeEntity> 
+	implements ISysEmployeeTypeService{
+	
+	@Override
+	public PageUtils queryPage(Map<String, Object> params) {
+		EntityWrapper<SysEmployeeTypeEntity> ew =  new EntityWrapper<SysEmployeeTypeEntity>();
+		ew.eq("company_id", MapUtil.getStr(params, "companyId"));
+		String empTypeCode = MapUtil.getStr(params, "empTypeCode");
+		if (StrUtil.isNotEmpty(empTypeCode)) {
+			ew.like("emp_type_code", empTypeCode);
+		}
+		String empTypeName = MapUtil.getStr(params, "empTypeName");
+		if (StrUtil.isNotEmpty(empTypeName)) {
+			ew.like("emp_type_name", empTypeName);
+		}
+		
+		ew.orderBy("create_time desc");
+		Page<SysEmployeeTypeEntity> page =
+			this.selectPage(new Query<SysEmployeeTypeEntity>(params).getPage(),ew);
+		return new PageUtils(page);
+	}
+
+	@Override
+	public List<SysEmployeeTypeEntity> setByCode(String empTypeCode) {
+		if(StringUtil.isNotBlank(empTypeCode)) {
+			Map<String,Object> params = new HashMap<>();
+			params.put("emp_type_code", empTypeCode);
+			List<SysEmployeeTypeEntity> selectByMap = baseMapper.selectByMap(params);
+			return selectByMap;
+		}else {
+			return null;
+		}
+		
+	}
+
+}
